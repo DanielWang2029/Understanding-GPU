@@ -676,7 +676,7 @@ function renderDetail(s) {
       ${s.h100e ? `<dt>H100-equivalents</dt><dd>${fmt(s.h100e)} installed</dd>` : ""}
       ${s.h100e_planned ? `<dt>H100e planned</dt><dd>${fmt(s.h100e_planned)}</dd>` : ""}
       ${s.capex_usd_b ? `<dt>Capital cost</dt><dd>$${fmt1(s.capex_usd_b)}B (modelled)</dd>` : ""}
-      ${s.year ? `<dt>Year</dt><dd>${fmt(s.year)}</dd>` : ""}
+      ${s.year ? `<dt>Year</dt><dd>${String(Math.round(s.year))}</dd>` : ""}
       ${s.category ? `<dt>Category</dt><dd>${s.category}</dd>` : ""}
     </dl>
     ${Object.keys(s.chip_families || {}).length

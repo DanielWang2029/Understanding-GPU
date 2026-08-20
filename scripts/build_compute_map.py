@@ -333,6 +333,13 @@ def load_dcv() -> list[dict]:
         if lat is None and state in US_STATE_CENTROIDS:
             lat, lon = US_STATE_CENTROIDS[state]
             precision = "state"
+        status = norm_status(r.get("status"))
+        capacity = num(r.get("capacity_mw"))
+        # dataCenterView's capacity_mw is the site's nameplate capacity, which is
+        # only energised where the site is actually operating. Attributing it to
+        # "operating" power for a site under construction overstates today.
+        power_now = capacity if status in ("operating", "expanding") else None
+        capex = num(r.get("cap_ex"))
         out.append(blank_record(
             dataset="dataCenterView",
             dataset_id=r["id"],
@@ -343,10 +350,11 @@ def load_dcv() -> list[dict]:
             admin1=state,
             country="United States",
             lat=lat, lon=lon, coord_precision=precision,
-            status=norm_status(r.get("status")),
+            status=status,
             year=num(r.get("operating_year")),
-            power_mw=num(r.get("capacity_mw")),
-            capex_usd_b=num(r.get("cap_ex")),
+            power_mw=power_now,
+            power_mw_planned=capacity,
+            capex_usd_b=(capex / 1e9) if capex and capex > 1e6 else capex,
             category=r.get("developer_category") or "",
             confidence=f"pipeline confidence {r.get('confidence')}" if r.get("confidence") else "",
             notes=f"review status: {r.get('review_status')}" if r.get("review_status") else "",
