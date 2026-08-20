@@ -1,0 +1,54 @@
+provider,region_id,label,city,country,lat,lon,coord_precision,accelerators,detail,status,sources
+Google Cloud,us-central1,Iowa,Council Bluffs,United States,41.2588,-95.8519,city,Google TPU,TPU v7 Ironwood + v6e + v5p + v5e + v3,operating,https://cloud.google.com/tpu/docs/regions-zones
+Google Cloud,us-central1-ai1a,Iowa AI zone,Lincoln,United States,40.8089,-96.7078,city,Google TPU,TPU v7 Ironwood primary zone (physically in Nebraska),operating,https://cloud.google.com/compute/docs/regions-zones/ai-zones
+Google Cloud,us-central2,Oklahoma,Pryor Creek,United States,36.3084,-95.3169,city,Google TPU,TPU v4 only,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,us-east1,South Carolina,Moncks Corner,United States,33.196,-80.0131,city,Google TPU,TPU v6e + v5p,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,us-east5,Columbus,Columbus,United States,39.9623,-83.0007,city,Google TPU,TPU v6e + v5p + v5e,operating,https://cloud.google.com/tpu/docs/regions-zones
+Google Cloud,us-south1,Dallas,Dallas,United States,32.7763,-96.7969,city,Google TPU,TPU v5e,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,us-south1-ai1b,Dallas AI zone,Austin,United States,30.2711,-97.7437,city,Google TPU,TPU v6e Trillium (physically in Austin),operating,https://cloud.google.com/compute/docs/regions-zones/ai-zones
+Google Cloud,us-west1,Oregon,The Dalles,United States,45.6015,-121.1842,city,Google TPU,TPU v5e,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,us-west4,Las Vegas,Las Vegas,United States,36.1674,-115.1484,city,Google TPU,TPU v5e,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,europe-west1,Belgium,Saint-Ghislain,Belgium,50.4477,3.8195,city,Google TPU,TPU v5e,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,europe-west2,London,London,United Kingdom,51.5074,-0.1278,city,Google TPU,TPU v7 Ironwood (priced; no public zone listed),operating,https://cloud.google.com/tpu/pricing
+Google Cloud,europe-west4,Netherlands,Eemshaven,Netherlands,53.4484,6.8465,city,Google TPU,TPU v6e + v5p + v5e + v3,operating,https://cloud.google.com/tpu/docs/regions-zones
+Google Cloud,asia-east1,Taiwan,Changhua County,Taiwan,24.0756,120.5445,city,Google TPU,TPU v2 legacy only,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,asia-northeast1,Tokyo,Tokyo,Japan,35.6769,139.7639,city,Google TPU,TPU v6e Trillium,operating,https://cloud.google.com/tpu/docs/regions-zones
+Google Cloud,asia-southeast1,Singapore,Jurong West,Singapore,1.3416,103.7049,city,Google TPU,TPU v5e,operating,https://cloud.google.com/tpu/pricing
+Google Cloud,southamerica-west1,Santiago,Santiago,Chile,-33.4377,-70.6511,city,Google TPU,TPU v6e Trillium (only TPU region in the Southern Hemisphere),operating,https://cloud.google.com/tpu/docs/regions-zones
+Google Cloud,europe-west4-ai1a,Netherlands AI zone,Den Helder,Netherlands,52.9135,4.7946,city,NVIDIA GPU,RTX PRO 6000 (G4) today; AI-zone capacity expanding,operating,https://cloud.google.com/compute/docs/regions-zones/ai-zones
+Google Cloud,us-east4,Ashburn,Ashburn,United States,39.0298,-77.4744,city,NVIDIA GPU,GB300 Ultra (A4X Max) + GB200 + B200 + H200,operating,https://cloud.google.com/compute/docs/gpus/gpu-regions-zones
+Google Cloud,europe-north1,Finland,Hamina,Finland,60.5683,27.1926,city,NVIDIA GPU,B200 (A4) + G4,operating,https://cloud.google.com/compute/docs/gpus/gpu-regions-zones
+Google Cloud,asia-south1,Mumbai,Mumbai,India,19.055,72.8692,city,NVIDIA GPU,H200 (A3 Ultra),operating,https://cloud.google.com/compute/docs/gpus/gpu-regions-zones
+Google Cloud,asia-south2,Delhi,New Delhi,India,28.6665,77.217,city,NVIDIA GPU,H200 (A3 Ultra),operating,https://cloud.google.com/compute/docs/gpus/gpu-regions-zones
+AWS,us-east-1,N. Virginia,Ashburn,United States,39.0298,-77.4744,city,AWS Trainium,trn1 + trn1n + inf2; B200/B300 GPU,operating,https://repost.aws/articles/ARmXIF-XS3RO27p0Pd1dVZXQ
+AWS,us-east-2,Ohio,Columbus,United States,39.9623,-83.0007,city,AWS Trainium,trn2 (only region with public trn2 on-demand) + trn1 + inf2,operating,https://repost.aws/articles/ARmXIF-XS3RO27p0Pd1dVZXQ
+AWS,us-west-2,Oregon,Boardman,United States,45.8399,-119.7006,city,AWS Trainium,trn1 + trn1n + inf2; B200/B300 GPU,operating,https://repost.aws/articles/ARmXIF-XS3RO27p0Pd1dVZXQ
+AWS,eu-west-2,London,London,United Kingdom,51.5074,-0.1278,city,AWS Trainium,Trn3 and P6 accelerated instances in new AZ eu-west-2d,operating,https://aws.amazon.com/about-aws/whats-new/2026/08/aws-iam-increased-quota/
+AWS,ap-northeast-2,Seoul,Seoul,South Korea,37.5667,126.9783,city,NVIDIA GPU,p6-b300 (B300) - only non-US AWS B300 region,operating,https://instances.vantage.sh/
+AWS,ap-south-1,Mumbai,Mumbai,India,19.055,72.8692,city,NVIDIA GPU,p6-b200 (B200) - only non-US AWS B200 region,operating,https://instances.vantage.sh/
+AWS,me-central-1,UAE,Abu Dhabi,United Arab Emirates,24.4538,54.3774,city,NVIDIA GPU,p5en (H200),operating,https://instances.vantage.sh/
+Microsoft Azure,koreacentral,Korea Central,Seoul,South Korea,37.5667,126.9783,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,koreasouth,Korea South,Busan,South Korea,35.1796,129.0756,city,NVIDIA GPU,ND GB200 v6 incl. confidential-compute variant,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,indonesiacentral,Indonesia Central,Jakarta,Indonesia,-6.1751,106.865,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,uaecentral,UAE Central,Abu Dhabi,United Arab Emirates,24.4538,54.3774,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,southindia,South India,Chennai,India,13.0827,80.2707,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,brazilsouth,Brazil South,Sao Paulo,Brazil,-23.5507,-46.6334,city,NVIDIA GPU,ND GB200 v6 + MI300X,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,italynorth,Italy North,Milan,Italy,45.4642,9.1896,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,spaincentral,Spain Central,Madrid,Spain,40.4168,-3.7038,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,germanywestcentral,Germany West Central,Frankfurt,Germany,50.1106,8.6821,city,NVIDIA GPU,ND GB200 v6 + MI300X,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,uksouth,UK South,London,United Kingdom,51.5074,-0.1278,city,NVIDIA GPU,ND GB200 v6 + MI300X,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,australiaeast,Australia East,Sydney,Australia,-33.8698,151.2083,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,canadaeast,Canada East,Quebec City,Canada,46.8139,-71.208,city,NVIDIA GPU,ND GB200 v6,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,swedencentral,Sweden Central,Gavle,Sweden,60.6749,17.1413,city,NVIDIA GPU,H200 + MI300X,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,norwayeast,Norway East,Oslo,Norway,59.9139,10.7522,city,NVIDIA GPU,H200,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,polandcentral,Poland Central,Warsaw,Poland,52.2297,21.0122,city,NVIDIA GPU,H200 + MI300X,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,southafricanorth,South Africa North,Johannesburg,South Africa,-26.2041,28.0473,city,NVIDIA GPU,H200 + H100,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,malaysiawest,Malaysia West,Kuala Lumpur,Malaysia,3.139,101.6869,city,NVIDIA GPU,H200,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,mexicocentral,Mexico Central,Queretaro,Mexico,20.5888,-100.3899,city,NVIDIA GPU,H200,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,japaneast,Japan East,Tokyo,Japan,35.6769,139.7639,city,NVIDIA GPU,H200 + H100,operating,https://prices.azure.com/api/retail/prices
+Microsoft Azure,uaenorth,UAE North,Dubai,United Arab Emirates,25.2048,55.2708,city,NVIDIA GPU,H200 + MI300X,operating,https://prices.azure.com/api/retail/prices
+CoreWeave,eu-north,Nordics,Falun,Sweden,60.6065,15.6355,city,NVIDIA GPU,GPU availability zones in Sweden Norway and Denmark,operating,https://docs.coreweave.com/platform/regions/all-availability-zones
+CoreWeave,eu-south,Spain,Barcelona,Spain,41.3874,2.1686,city,NVIDIA GPU,three availability zones in Spain,operating,https://docs.coreweave.com/platform/regions/all-availability-zones
+CoreWeave,eu-west,UK,London,United Kingdom,51.5074,-0.1278,city,NVIDIA GPU,two availability zones in the UK,operating,https://docs.coreweave.com/platform/regions/all-availability-zones
+CoreWeave,ca-east,Ontario,Toronto,Canada,43.6535,-79.3839,city,NVIDIA GPU,one Canadian availability zone,operating,https://docs.coreweave.com/platform/regions/all-availability-zones
+Oracle OCI,multi-region,OCI GPU shapes,Austin,United States,30.2711,-97.7437,city,Mixed,GB300/GB200/B300/B200/H200/H100 plus MI355X and MI300X shapes; per-region availability not published,operating,https://docs.oracle.com/en-us/iaas/Content/Compute/References/computeshapes.htm

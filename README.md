@@ -1,9 +1,15 @@
 # Understanding-GPU
 
-A technical and commercial field guide to the hardware that trains and serves large language models: how GPUs and TPUs work, why they are built differently, what every current accelerator's specifications actually are, what they cost, who can get them, and how they compare.
+Two things live here:
 
-**→ Read the report: [`report/report.md`](report/report.md)** (about 20,000 words, 24 figures, 12 data-generated tables)
+**1. A field guide to AI accelerators** — how GPUs and TPUs work, why they are built differently, what every current accelerator's specifications actually are, what they cost, who can get them, and how they compare.
+
+**→ Read the report: [`report/report.md`](report/report.md)** (about 21,500 words, 24 figures, 13 data-generated tables)
 **→ HTML version: [`docs/index.html`](docs/index.html)** — open locally, or serve with `python3 -m http.server -d docs`
+
+**2. An interactive global compute map** — where that hardware physically is, operating and planned, drilling from continent to country to individual data center with sources attached to every site.
+
+**→ Open the map: [`docs/compute-map/index.html`](docs/compute-map/index.html)** ([how it works](docs/compute-map/README.md))
 
 Everything is generated from the datasets in [`data/`](data/), so any number can be traced, corrected and re-plotted.
 
@@ -18,28 +24,45 @@ Everything is generated from the datasets in [`data/`](data/), so any number can
 | 10 | Supply and price: bill-of-materials estimates, CoWoS and HBM chokepoints, cloud rental pricing across 14 providers, TCO models, export controls |
 | 11–12 | A decision procedure for choosing hardware, then methodology, conflicting numbers and explicit unknowns |
 
+## What is on the map
+
+| Level | Grouping | Click to |
+|---|---|---|
+| World | Continent bubbles | Zoom to a continent |
+| Continent | Country bubbles | Zoom to a country |
+| Country | Individual data centers and cloud regions | Open a site's capacity, chips, provenance and sources |
+
+631 physical sites and 53 cloud regions, covering both **currently available** and **planned** capacity, built from four sources: the uploaded **dataCenterView** project (490 US sites, 1,115 source URLs), **Epoch AI**'s frontier data-center dataset (83 sites with modelled power, chip counts and forward timelines, CC-BY), **95 curated non-US sites** across 31 countries, and **53 cloud regions** documenting where TPU, Trainium and GPU SKUs can actually be rented. Records describing the same campus are merged into one site — `xAI Colossus 2` and `Colossus 2`, or the five records behind `OpenAI Stargate Abilene` — with the merge reason and every contributing source shown in the panel. See [`docs/compute-map/README.md`](docs/compute-map/README.md) for the deduplication rules and the coverage caveats.
+
 ## Repository layout
 
 ```
-data/                  7 CSVs — specs, pricing, benchmarks, BOM, supply chain, failures
-scripts/theme.py       shared plotting style, vendor palette, drawing helpers
-scripts/fig_diagrams.py  8 architecture diagrams drawn from primitives
-scripts/fig_data.py    16 plots computed from the CSVs
-scripts/tables.py      markdown tables generated from the CSVs
-scripts/build_site.py  assembles report/report.md and docs/index.html
-report/sections/       the report source, one markdown file per section
-report/report.md       the assembled single-file report
-report/figures/        24 generated PNGs
-docs/index.html        HTML version with sidebar navigation
+data/                        report datasets (specs, pricing, benchmarks, BOM, supply chain)
+data/compute_map/            map datasets (curated sites, cloud regions, identity rules)
+data/sources/epoch_ai/       Epoch AI AI-Data-Centers CSVs (CC-BY 4.0)
+scripts/theme.py             shared plotting style, vendor palette, drawing helpers
+scripts/fig_diagrams.py      8 architecture diagrams drawn from primitives
+scripts/fig_data.py          16 plots computed from the CSVs
+scripts/tables.py            markdown tables generated from the CSVs
+scripts/build_site.py        assembles report/report.md and docs/index.html
+scripts/geocode_sites.py     geocodes Epoch addresses into a committed cache
+scripts/build_compute_map.py normalises, dedupes and rolls up the map dataset
+report/sections/             the report source, one markdown file per section
+report/report.md             the assembled single-file report
+report/figures/              24 generated PNGs
+docs/index.html              the report as an HTML site
+docs/compute-map/            the interactive map (D3 + topojson vendored locally)
 ```
 
 ## Reproducing
 
 ```bash
 pip install -r requirements.txt
-python3 scripts/build_site.py --figures   # regenerate every figure, then the report and site
-python3 scripts/build_site.py             # rebuild the report and site only
-python3 scripts/tables.py                 # print the generated tables
+python3 scripts/build_site.py --figures      # regenerate every figure, then the report and site
+python3 scripts/build_site.py                # rebuild the report and site only
+python3 scripts/tables.py                    # print the generated tables
+python3 scripts/build_compute_map.py         # rebuild the map dataset from all four sources
+python3 -m http.server -d docs 8901          # serve the report and the map
 ```
 
 ## Conventions the report follows

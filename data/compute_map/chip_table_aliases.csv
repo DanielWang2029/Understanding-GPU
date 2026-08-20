@@ -1,0 +1,14 @@
+chip_table_name,action,target,reason
+Fluidstack Lake Mariner,merge_into,Anthropic Lake Mariner,Same TeraWulf campus - Fluidstack operates for Anthropic
+Core42 Lake Mariner,merge_into,Anthropic Lake Mariner,Same TeraWulf campus - Core42 is a second tenant
+Nebius Mantsala,drop,,"Owner Nscale and user Microsoft with a Rubin count identical to Microsoft Narvik Norway; Nebius (Finland) and Nscale (Norway) are different companies. Treated as a mislabelled duplicate of the Narvik record"
+AWS New Albany,attach_to,cur-aws-newalbany,Chip-only Epoch record matched to a curated site
+Anthropic Barber Lake,attach_to,cur-anthropic-barberlake,Chip-only Epoch record matched to a curated site
+Google Leesburg,attach_to,cur-google-leesburg,Chip-only Epoch record matched to a curated site
+Google Lenoir,attach_to,cur-google-lenoir,Chip-only Epoch record matched to a curated site
+Huawei Wuhu,attach_to,cur-huawei-wuhu,Chip-only Epoch record matched to a curated site
+DayOne Kempas,attach_to,cur-dayone-kempas,Chip-only Epoch record matched to a curated site
+Bridge Data Centres Kulai,attach_to,cur-bridge-kulai,Chip-only Epoch record matched to a curated site
+G42-Khazna Ajman,attach_to,cur-g42-ajman,Chip-only Epoch record matched to a curated site
+EcoDataCenter 2,attach_to,cur-ecodatacenter-borlange,Chip-only Epoch record matched to a curated site
+Mistral Bruyeres-le-Chatel,attach_to,cur-eclairion-mistral,Chip-only Epoch record matched to a curated site

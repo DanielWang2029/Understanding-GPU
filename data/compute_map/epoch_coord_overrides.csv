@@ -1,0 +1,32 @@
+site_name,lat,lon,coord_precision,source,reason
+Alibaba Zhangbei,41.18353,114.73237,site,Epoch AI interactive map site polygon centroid,Address blank in the CSV so the geocoder returned nothing
+Amazon Madison Mega Site,32.59738,-90.09137,site,Epoch AI interactive map site polygon centroid,Address blank in the CSV so the geocoder returned nothing
+OpenAI Stargate Shackelford,32.54142,-99.54831,site,Epoch AI interactive map site polygon centroid,Rural private road did not geocode
+DayOne Nusajaya,1.42938,103.59785,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of Malaysia
+Google Kansas City East,39.17511,-94.4619,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of the United States
+Google Mesa,33.35462,-111.67636,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of the United States
+Google Storey County,39.49468,-119.43131,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of the United States
+Microsoft Narvik Norway,68.57628,17.58454,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of Norway
+OpenAI Stargate Michigan,42.12037,-83.88931,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of the United States
+Oracle Batam,1.18838,104.10502,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of Indonesia
+Southgate Melbourne,-37.81727,144.84319,site,Epoch AI interactive map site polygon centroid,Geocoder fell back to the centroid of Australia
+OpenAI Stargate UAE,24.15029,54.44278,site,Epoch AI interactive map site polygon centroid,Geocoder matched a street on Dalma island ~200 km from the Al Dhafrah campus
+Colossus 1,35.06017,-90.15546,site,Epoch AI interactive map site polygon centroid,Street-level match was ~7 km from the campus
+Colossus 2,34.98925,-90.03676,site,Epoch AI interactive map site polygon centroid,Campus spans the Tennessee-Mississippi line
+Meta Hyperion,32.51059,-91.63604,site,Epoch AI interactive map site polygon centroid,Town centroid was ~5 km from the campus
+OpenAI Stargate Abilene,32.50131,-99.78561,site,Epoch AI interactive map site polygon centroid,Distinguishes the core campus from the adjacent Crusoe expansion
+Crusoe Abilene Expansion,32.49188,-99.78198,site,Epoch AI interactive map site polygon centroid,Distinguishes the expansion from the core Stargate campus
+Goodnight,35.01975,-101.30821,site,Epoch AI interactive map site polygon centroid,Rural address did not geocode
+VNET Bayin Ulanqab,40.98109,113.31431,site,Epoch AI interactive map site polygon centroid,Chinese address strings geocode poorly
+Huawei Horinger,40.54002,111.82789,site,Epoch AI interactive map site polygon centroid,Chinese address strings geocode poorly
+Start Campus Sines,37.93494,-8.81271,site,Epoch AI interactive map site polygon centroid,Geocoder returned the town of Sines rather than the campus
+Google Waltham Cross,51.69639,-0.0489,site,Epoch AI interactive map site polygon centroid,Farm-name address geocoded imprecisely
+CoreWeave Norway,58.25879,7.89897,site,Epoch AI interactive map site polygon centroid,Bulk N01 campus at Ovrebo
+Anthropic Lake Mariner,43.35628,-78.60329,site,Epoch AI interactive map site polygon centroid,Shared campus with the Fluidstack and Core42 records
+Microsoft Fairwater Wisconsin,42.68393,-87.9152,site,Epoch AI interactive map site polygon centroid,Improves on a street-level match
+Anthropic-Amazon New Carlisle,41.67936,-86.47123,site,Epoch AI interactive map site polygon centroid,Improves on a street-level match
+Meta Prometheus,40.08778,-82.74268,site,Epoch AI interactive map site polygon centroid,Improves on a street-level match
+Microsoft Fairwater Atlanta,33.45719,-84.52452,site,Epoch AI interactive map site polygon centroid,Improves on a street-level match
+CoreWeave Helios,33.77506,-100.86985,site,Epoch AI interactive map site polygon centroid,Rural Dickens County site
+Google New Albany,40.05677,-82.76774,site,Epoch AI interactive map site polygon centroid,Campus centroid rather than the mailing address
+OpenAI Stargate Lordstown,41.16598,-80.85743,city,Epoch AI address geocoded to town level,Former GM Lordstown plant; no polygon published
