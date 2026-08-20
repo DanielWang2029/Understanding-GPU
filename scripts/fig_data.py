@@ -728,9 +728,9 @@ def fig20_reliability():
     fig, axes = plt.subplots(1, 3, figsize=(15.4, 6.4))
     titleblock(
         fig,
-        "Reliability is a first-class hardware property: 419 unexpected interruptions in 54 days",
+        "Reliability is a hardware specification: 419 unexpected interruptions in 54 days",
         "Meta's published failure log for Llama 3.1 405B on 16,384 H100s is the best public dataset on what breaks at scale.",
-        top=0.85,
+        top=0.79,
     )
 
     ax = axes[0]
@@ -744,11 +744,11 @@ def fig20_reliability():
                 color=INK)
     ax.set_xlabel("unexpected interruptions in 54 days")
     ax.set_xlim(0, 330)
-    ax.set_title("GPUs cause 58.7% of stoppages", fontsize=11.0)
+    ax.set_title("GPU-attributed causes: 268 of 419", fontsize=11.0)
     ax.grid(axis="y", visible=False)
-    note(ax, 6, 0.15,
-         "Includes 6 silent data corruptions —\nthe worst kind, because the job keeps\n"
-         "running and poisons the gradients.", fontsize=8.4)
+    note(ax, 96, 1.25,
+         "Includes 6 silent data\ncorruptions — the worst kind,\n"
+         "because the job keeps running\nand poisons the gradients.", fontsize=8.4)
 
     ax = axes[1]
     n = np.array([1024, 4096, 8192, 16384, 32768, 65536, 100000, 250000, 1000000])
@@ -783,8 +783,8 @@ def fig20_reliability():
         ax.annotate(f"{lbl}\n→ {w:.0f}% of the cluster wasted", (d_, w),
                     textcoords="offset points", xytext=(16, 6), fontsize=8.4, color=INK)
     ax.set_xlabel("checkpoint cost δ (seconds)")
-    ax.set_ylabel("fraction of cluster time wasted (%)")
-    ax.set_title("Young/Daly optimum on a 100k-GPU job\n√(2δ/M)", fontsize=11.0)
+    ax.set_ylabel("fraction of cluster time wasted, √(2δ/M)  (%)")
+    ax.set_title("Checkpoint waste on a 100k-GPU job", fontsize=11.0)
     ax.set_xlim(0, 125)
     ax.set_ylim(0, 30)
 

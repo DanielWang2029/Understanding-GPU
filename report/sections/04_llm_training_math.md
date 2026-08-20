@@ -121,7 +121,7 @@ One trap worth naming: **FP8 runs report lower MFU while being faster**, because
 
 ![Llama 3 failure breakdown, job MTBF versus scale, and checkpoint waste](figures/fig20_reliability.png)
 
-Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: **466 interruptions, 47 planned and 419 unexpected, of which about 78% were hardware and 58.7% were GPU-specific** — 148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 silent data corruptions. Software bugs were third at 12.9%. Only **3 of 419** events needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)
+Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: **466 interruptions, 47 planned and 419 unexpected, of which about 78% were confirmed hardware issues.** Meta states that GPU issues are the largest single category at **58.7% of unexpected interruptions**; tabulating the paper's per-cause counts (148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 thermal-interface or sensor faults, 6 silent data corruptions) gives 268 of 419, or 64% — the difference depends on whether SRAM, thermal and silent-corruption events are attributed to the GPU. Software bugs were third at 54 events. Only **3 of 419** interruptions needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)
 
 Derived consequences (estimate, assuming Meta's per-GPU rate holds):
 

@@ -413,7 +413,7 @@ One trap worth naming: **FP8 runs report lower MFU while being faster**, because
 
 ![Llama 3 failure breakdown, job MTBF versus scale, and checkpoint waste](figures/fig20_reliability.png)
 
-Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: **466 interruptions, 47 planned and 419 unexpected, of which about 78% were hardware and 58.7% were GPU-specific** — 148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 silent data corruptions. Software bugs were third at 12.9%. Only **3 of 419** events needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)
+Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: **466 interruptions, 47 planned and 419 unexpected, of which about 78% were confirmed hardware issues.** Meta states that GPU issues are the largest single category at **58.7% of unexpected interruptions**; tabulating the paper's per-cause counts (148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 thermal-interface or sensor faults, 6 silent data corruptions) gives 268 of 419, or 64% — the difference depends on whether SRAM, thermal and silent-corruption events are attributed to the GPU. Software bugs were third at 54 events. Only **3 of 419** interruptions needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)
 
 Derived consequences (estimate, assuming Meta's per-GPU rate holds):
 
@@ -767,6 +767,12 @@ The pattern in that figure is the single most useful thing to internalise: **no 
 | Cost per token served | depends entirely on contract | see §10 |
 | Software risk | NVIDIA | breadth, day-one format support |
 
+The memory plane is where the field is least NVIDIA-shaped, and it deserves its own view because capacity and bandwidth trade against each other differently for every vendor:
+
+![HBM capacity versus bandwidth across the field](figures/fig10_memory_scatter.png)
+
+Three things stand out. AMD has led on capacity for three straight generations and now leads on bandwidth too. HBM4 is the first generation where bandwidth roughly triples rather than creeping up — 22 TB/s on Rubin and about 23 TB/s on MI455X, against 8 TB/s for the entire Blackwell/MI355X generation. And the cost-optimised inference parts (TPU v5e and v6e at 16–32 GB, MTIA v2 on LPDDR5 at 205 GB/s, L4 at 300 GB/s) sit far below the frontier deliberately: for recommendation and ranking the bottleneck is embedding capacity and random access, not sequential bandwidth, and paying for HBM there is waste.
+
 ### 9.2 Efficiency
 
 ![Compute and memory per watt](figures/fig11_perf_per_watt.png)
@@ -891,7 +897,7 @@ Why this gates supply: a ~2,500 mm² H100-class interposer yields roughly 16–2
 | **TPU v6e Trillium** | $1.22 | — | $2.70 | $1.22 | 2.2× |
 | **TPU v7 Ironwood** | $1.60 | — | $12.00 | $1.60 | 7.5× |
 
-The dominant fact here is dispersion, not level. Identical H100 silicon spans **$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)** — a 45× spread, or 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.
+The dominant fact here is dispersion, not level. Identical H100 silicon spans **$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)** — a 45× spread, or about 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.
 
 **The trend is not monotonic, and most published narratives are out of date.** H100 on-demand went from roughly $7–10/hour at the 2023 peak to $2–4 by late 2025 — driven by CoWoS capacity doubling, neocloud entry, Blackwell pushing Hopper down the stack, and depreciation pressure on unsold inventory. Then it partially reversed: **contract pricing rose about 40% between October 2025 and March 2026, attributed to HBM3e cost pass-through.** Memory, not GPU fabrication, became the binding constraint. Blackwell lead times stretched to 3–7 months by early 2026. (estimate)
 
@@ -1037,9 +1043,9 @@ A decision procedure, in the order the questions actually bind.
 
 ```
 data/                        seven CSVs, every row carrying a confidence label
-  accelerators.csv           58 accelerators: specs, TDP, fabric, price
-  cloud_pricing.csv          61 offers across 14 providers and 9 pricing tiers
-  rack_systems.csv           13 rack- and pod-scale systems
+  accelerators.csv           49 accelerators: specs, TDP, fabric, price
+  cloud_pricing.csv          59 offers across 12 providers and 9 pricing tiers
+  rack_systems.csv           12 rack- and pod-scale systems
   mlperf_training.csv        MLPerf Training v4.0 through v6.0 results
   training_runs.csv          published training compute for 14 real models
   bom_costs.csv              modelled bill of materials for 6 chips

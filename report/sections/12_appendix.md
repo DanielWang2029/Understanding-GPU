@@ -6,9 +6,9 @@
 
 ```
 data/                        seven CSVs, every row carrying a confidence label
-  accelerators.csv           58 accelerators: specs, TDP, fabric, price
-  cloud_pricing.csv          61 offers across 14 providers and 9 pricing tiers
-  rack_systems.csv           13 rack- and pod-scale systems
+  accelerators.csv           49 accelerators: specs, TDP, fabric, price
+  cloud_pricing.csv          59 offers across 12 providers and 9 pricing tiers
+  rack_systems.csv           12 rack- and pod-scale systems
   mlperf_training.csv        MLPerf Training v4.0 through v6.0 results
   training_runs.csv          published training compute for 14 real models
   bom_costs.csv              modelled bill of materials for 6 chips

@@ -41,7 +41,7 @@ Why this gates supply: a ~2,500 mm² H100-class interposer yields roughly 16–2
 
 <!-- TABLE:cloud_prices -->
 
-The dominant fact here is dispersion, not level. Identical H100 silicon spans **$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)** — a 45× spread, or 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.
+The dominant fact here is dispersion, not level. Identical H100 silicon spans **$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)** — a 45× spread, or about 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.
 
 **The trend is not monotonic, and most published narratives are out of date.** H100 on-demand went from roughly $7–10/hour at the 2023 peak to $2–4 by late 2025 — driven by CoWoS capacity doubling, neocloud entry, Blackwell pushing Hopper down the stack, and depreciation pressure on unsold inventory. Then it partially reversed: **contract pricing rose about 40% between October 2025 and March 2026, attributed to HBM3e cost pass-through.** Memory, not GPU fabrication, became the binding constraint. Blackwell lead times stretched to 3–7 months by early 2026. (estimate)
 

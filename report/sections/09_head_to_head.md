@@ -19,6 +19,12 @@ The pattern in that figure is the single most useful thing to internalise: **no 
 | Cost per token served | depends entirely on contract | see §10 |
 | Software risk | NVIDIA | breadth, day-one format support |
 
+The memory plane is where the field is least NVIDIA-shaped, and it deserves its own view because capacity and bandwidth trade against each other differently for every vendor:
+
+![HBM capacity versus bandwidth across the field](figures/fig10_memory_scatter.png)
+
+Three things stand out. AMD has led on capacity for three straight generations and now leads on bandwidth too. HBM4 is the first generation where bandwidth roughly triples rather than creeping up — 22 TB/s on Rubin and about 23 TB/s on MI455X, against 8 TB/s for the entire Blackwell/MI355X generation. And the cost-optimised inference parts (TPU v5e and v6e at 16–32 GB, MTIA v2 on LPDDR5 at 205 GB/s, L4 at 300 GB/s) sit far below the frontier deliberately: for recommendation and ranking the bottleneck is embedding capacity and random access, not sequential bandwidth, and paying for HBM there is waste.
+
 ### 9.2 Efficiency
 
 ![Compute and memory per watt](figures/fig11_perf_per_watt.png)

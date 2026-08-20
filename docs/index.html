@@ -909,7 +909,7 @@ footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
 <p>One trap worth naming: <strong>FP8 runs report lower MFU while being faster</strong>, because the FP8 peak is 2× the BF16 peak. Databricks measured a 1.4–1.5× throughput gain from FP8 alongside a <em>lower</em> MFU percentage. Any MFU comparison without a stated, common, dense denominator is meaningless.</p>
 <h3 id="46-reliability-is-a-hardware-specification">4.6 Reliability is a hardware specification</h3>
 <p><img alt="Llama 3 failure breakdown, job MTBF versus scale, and checkpoint waste" src="figures/fig20_reliability.png" /></p>
-<p>Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: <strong>466 interruptions, 47 planned and 419 unexpected, of which about 78% were hardware and 58.7% were GPU-specific</strong> — 148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 silent data corruptions. Software bugs were third at 12.9%. Only <strong>3 of 419</strong> events needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)</p>
+<p>Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: <strong>466 interruptions, 47 planned and 419 unexpected, of which about 78% were confirmed hardware issues.</strong> Meta states that GPU issues are the largest single category at <strong>58.7% of unexpected interruptions</strong>; tabulating the paper's per-cause counts (148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 thermal-interface or sensor faults, 6 silent data corruptions) gives 268 of 419, or 64% — the difference depends on whether SRAM, thermal and silent-corruption events are attributed to the GPU. Software bugs were third at 54 events. Only <strong>3 of 419</strong> interruptions needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)</p>
 <p>Derived consequences (estimate, assuming Meta's per-GPU rate holds):</p>
 <ul>
 <li>Per-GPU MTBF ≈ 2,112 GPU-days ≈ 5.8 GPU-years counting all causes.</li>
@@ -2209,6 +2209,9 @@ footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
 </tr>
 </tbody>
 </table>
+<p>The memory plane is where the field is least NVIDIA-shaped, and it deserves its own view because capacity and bandwidth trade against each other differently for every vendor:</p>
+<p><img alt="HBM capacity versus bandwidth across the field" src="figures/fig10_memory_scatter.png" /></p>
+<p>Three things stand out. AMD has led on capacity for three straight generations and now leads on bandwidth too. HBM4 is the first generation where bandwidth roughly triples rather than creeping up — 22 TB/s on Rubin and about 23 TB/s on MI455X, against 8 TB/s for the entire Blackwell/MI355X generation. And the cost-optimised inference parts (TPU v5e and v6e at 16–32 GB, MTIA v2 on LPDDR5 at 205 GB/s, L4 at 300 GB/s) sit far below the frontier deliberately: for recommendation and ranking the bottleneck is embedding capacity and random access, not sequential bandwidth, and paying for HBM there is waste.</p>
 <h3 id="92-efficiency">9.2 Efficiency</h3>
 <p><img alt="Compute and memory per watt" src="figures/fig11_perf_per_watt.png" /></p>
 <p>Chip-level perf/W favours the specialised parts, and the ordering is stable across metrics: TPU and Maia-class ASICs lead on memory per watt, Blackwell leads on compute per watt among GPUs, and Huawei's 910C trails badly because it lacks low-precision paths and rides an older node.</p>
@@ -2714,7 +2717,7 @@ footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
 </tr>
 </tbody>
 </table>
-<p>The dominant fact here is dispersion, not level. Identical H100 silicon spans <strong>$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)</strong> — a 45× spread, or 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.</p>
+<p>The dominant fact here is dispersion, not level. Identical H100 silicon spans <strong>$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)</strong> — a 45× spread, or about 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.</p>
 <p><strong>The trend is not monotonic, and most published narratives are out of date.</strong> H100 on-demand went from roughly $7–10/hour at the 2023 peak to $2–4 by late 2025 — driven by CoWoS capacity doubling, neocloud entry, Blackwell pushing Hopper down the stack, and depreciation pressure on unsold inventory. Then it partially reversed: <strong>contract pricing rose about 40% between October 2025 and March 2026, attributed to HBM3e cost pass-through.</strong> Memory, not GPU fabrication, became the binding constraint. Blackwell lead times stretched to 3–7 months by early 2026. (estimate)</p>
 <h3 id="104-normalised-what-you-get-per-dollar">10.4 Normalised: what you get per dollar</h3>
 <p><img alt="Price per PFLOP-hour and per TB/s-hour" src="figures/fig15_price_per_flop.png" /></p>
@@ -3020,9 +3023,9 @@ footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
 <h2 id="12-appendix-methodology-conflicts-and-unknowns">12. Appendix: methodology, conflicts and unknowns</h2>
 <h3 id="121-how-this-report-was-built">12.1 How this report was built</h3>
 <pre><code>data/                        seven CSVs, every row carrying a confidence label
-  accelerators.csv           58 accelerators: specs, TDP, fabric, price
-  cloud_pricing.csv          61 offers across 14 providers and 9 pricing tiers
-  rack_systems.csv           13 rack- and pod-scale systems
+  accelerators.csv           49 accelerators: specs, TDP, fabric, price
+  cloud_pricing.csv          59 offers across 12 providers and 9 pricing tiers
+  rack_systems.csv           12 rack- and pod-scale systems
   mlperf_training.csv        MLPerf Training v4.0 through v6.0 results
   training_runs.csv          published training compute for 14 real models
   bom_costs.csv              modelled bill of materials for 6 chips
