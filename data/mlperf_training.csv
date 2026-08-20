@@ -1,0 +1,30 @@
+round,round_date,benchmark,platform,vendor,chips,minutes,confidence,note
+v4.0,2024-06,GPT-3 175B,H100 (NVIDIA Eos),NVIDIA,11616,3.44,confirmed,Quantum-2 InfiniBand
+v4.0,2024-06,GPT-3 175B,H100 (NVIDIA Eos),NVIDIA,3584,10.90,confirmed,v3.0 result carried for scaling reference
+v4.1,2024-11,GPT-3 175B,TPU v5p,Google,6144,11.77,confirmed,Largest TPU submission on GPT-3
+v4.1,2024-11,GPT-3 175B,TPU v5p,Google,2048,29.60,confirmed,
+v4.1,2024-11,GPT-3 175B,TPU v6e Trillium,Google,2048,27.60,confirmed,99% weak-scaling efficiency across multislice
+v5.0,2025-06,Llama 2 70B LoRA,GB200 NVL72,NVIDIA,72,1.598,confirmed,Oracle submission
+v5.0,2025-06,Llama 2 70B LoRA,B200 HGX,NVIDIA,64,2.019,confirmed,
+v5.0,2025-06,Llama 2 70B LoRA,GB200,NVIDIA,8,11.145,confirmed,8-GPU generational comparison point
+v5.0,2025-06,Llama 2 70B LoRA,H100,NVIDIA,8,27.93,confirmed,8-GPU generational comparison point
+v5.0,2025-06,Llama 3.1 405B,GB200 NVL72,NVIDIA,,20.80,confirmed,Blackwell debut on 405B
+v5.1,2025-11,Llama 2 70B LoRA,MI355X,AMD,8,10.18,confirmed,AMD best 8-GPU FP8 result
+v5.1,2025-11,Llama 2 70B LoRA,MI350X,AMD,8,12.23,confirmed,
+v5.1,2025-11,Llama 2 70B LoRA,MI325X,AMD,8,21.05,confirmed,
+v5.1,2025-11,Llama 2 70B LoRA,MI300X,AMD,8,28.02,confirmed,
+v5.1,2025-11,Llama 3.1 8B,MI355X,AMD,8,99.71,confirmed,
+v5.1,2025-11,Llama 3.1 8B,MI350X,AMD,8,122.93,confirmed,
+v5.1,2025-11,Llama 3.1 405B,GB200 NVL72,NVIDIA,2560,18.79,confirmed,3x faster than Hopper at same GPU count
+v5.1,2025-11,Llama 3.1 405B,GB200 NVL72,NVIDIA,5120,10.00,confirmed,
+v6.0,2026-06,DeepSeek-V3 671B,GB300 NVL72,NVIDIA,2048,5.54,confirmed,CoreWeave
+v6.0,2026-06,DeepSeek-V3 671B,GB300 NVL72,NVIDIA,4096,3.09,confirmed,CoreWeave
+v6.0,2026-06,DeepSeek-V3 671B,GB300 NVL72,NVIDIA,8192,2.02,confirmed,CoreWeave record; Spectrum-X Ethernet
+v6.0,2026-06,Llama 3.1 405B,GB300 NVL72,NVIDIA,512,58.30,confirmed,
+v6.0,2026-06,Llama 3.1 405B,GB300 NVL72,NVIDIA,2048,18.50,confirmed,
+v6.0,2026-06,Llama 3.1 405B,GB300 NVL72,NVIDIA,4096,9.80,confirmed,
+v6.0,2026-06,Llama 3.1 405B,GB200 NVL72,NVIDIA,2560,18.80,confirmed,
+v6.0,2026-06,Llama 3.1 405B,GB200 NVL72,NVIDIA,5120,10.00,confirmed,
+v6.0,2026-06,Llama 3.1 405B,GB200 NVL72,NVIDIA,8192,7.07,confirmed,Azure Fairwater; 83% scaling efficiency vs 40-rack baseline
+v6.0,2026-06,GPT-OSS 20B,GB300 NVL72,NVIDIA,512,7.43,confirmed,
+v6.0,2026-06,Llama 2 70B LoRA,GB300 NVL72,NVIDIA,512,0.40,confirmed,
