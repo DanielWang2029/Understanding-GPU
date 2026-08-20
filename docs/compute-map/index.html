@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global AI Compute Map — GPUs, TPUs and data centers, available and planned</title>
+<meta name="description" content="Interactive 2D world map of AI compute capacity: drill from continent to country to individual data center, with per-site sources.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b1016'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%234da3ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2376b900'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <aside id="sidebar">
+    <header>
+      <h1>Global AI Compute Map</h1>
+      <p class="sub">Data centers, GPUs and TPUs — operating and planned<br>
+        <span id="asof"></span></p>
+    </header>
+
+    <nav id="breadcrumb" aria-label="Drill-down level"></nav>
+
+    <div class="panel">
+      <label class="field-label" for="metric">Size markers by</label>
+      <select id="metric">
+        <option value="power_mw_planned">Power capacity, planned at full build (MW)</option>
+        <option value="power_mw">Power capacity, operating today (MW)</option>
+        <option value="h100e">Compute installed (H100-equivalents)</option>
+        <option value="h100e_planned">Compute planned (H100-equivalents)</option>
+        <option value="chips">Accelerator chips installed</option>
+        <option value="sites">Number of sites</option>
+      </select>
+    </div>
+
+    <div class="panel">
+      <div class="field-label">Status</div>
+      <div id="status-filters" class="chips"></div>
+      <div class="field-label" style="margin-top:12px">Accelerator</div>
+      <div id="accel-filters" class="chips"></div>
+      <div class="field-label" style="margin-top:12px">Include</div>
+      <div id="tier-filters" class="chips"></div>
+    </div>
+
+    <div class="panel" id="stats"></div>
+
+    <div class="panel" id="detail">
+      <p class="muted">Click a continent to zoom in. Click again to drill into a
+        country, then into individual data centers. Every site opens its own
+        sources.</p>
+    </div>
+
+    <footer>
+      <div id="source-note"></div>
+    </footer>
+  </aside>
+
+  <main id="map-wrap">
+    <div id="toolbar">
+      <button id="btn-up" title="Zoom out one level (Esc)">&#8593; Zoom out</button>
+      <button id="btn-reset" title="Back to the world view">Reset to world</button>
+      <span class="spacer"></span>
+      <label class="toggle"><input type="checkbox" id="toggle-labels" checked> Labels</label>
+      <label class="toggle"><input type="checkbox" id="toggle-regions" checked> Cloud regions</label>
+      <span id="hint" class="hint"></span>
+    </div>
+    <svg id="map" role="img" aria-label="World map of AI compute capacity"></svg>
+    <div id="tooltip" role="tooltip"></div>
+    <div id="legend"></div>
+  </main>
+
+</div>
+
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

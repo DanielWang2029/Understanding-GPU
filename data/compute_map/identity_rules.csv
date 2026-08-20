@@ -1,0 +1,33 @@
+rule,name_a,name_b,reason
+merge,OpenAI Stargate Abilene,Abilene campus,"dataCenterView's ""Abilene campus"" (Crusoe developer, Microsoft tenant, OpenAI end user, 1200 MW) is the Lancium Clean Campus that Epoch tracks as Stargate Abilene"
+merge,Anthropic Lake Mariner,Fluidstack Lake Mariner,Fluidstack is Anthropic's build and operations partner on the same TeraWulf campus
+merge,Anthropic Lake Mariner,Core42 Lake Mariner,Core42 is a separate tenant on the same TeraWulf Lake Mariner campus - one physical site
+never,QTS Eagle Mountain,Meta Eagle Mountain,Two different buildings ~950 m apart in Eagle Mountain Utah
+never,Microsoft Goodyear,Stream Phoenix,Different owners and buildings ~570 m apart in Goodyear Arizona
+never,OpenAI Stargate Abilene,Crusoe Abilene Expansion,Adjacent but distinct builds ~1 km apart; the expansion was reallocated from OpenAI to Microsoft in March 2026
+never,SoftBank Sakai,KDDI Osaka Sakai,Two projects on neighbouring parcels of the former Sharp LCD site
+never,DayOne Kempas,Bridge Data Centres Kulai,Separate Johor sites
+never,DayOne Nusajaya,Bridge Data Centres Kulai,Separate Johor sites
+never,Google AI Hub Visakhapatnam,Reliance Visakhapatnam AI cluster,Different projects in the same city
+never,Google New Albany,AWS New Albany,Different operators in the same Ohio metro
+never,Google New Albany,Meta Prometheus,Different operators in New Albany Ohio
+never,Google Cedar Rapids,QTS Cedar Rapids,Different owners ~1.9 km apart
+never,Alice Recoque,Eclairion Bruyeres-le-Chatel,A CEA exascale system and a commercial colocation campus that share a town centroid
+never,GroqCloud Dammam,Humain Dammam,Different operators sharing a city centroid
+never,QTS Richmond 1,QTS Richmond 2,Distinct buildings on the same QTS Richmond campus
+never,QTS Richmond 1,QTS Richmond 3,Distinct buildings on the same QTS Richmond campus
+never,QTS Richmond 2,QTS Richmond 3,Distinct buildings on the same QTS Richmond campus
+never,Microsoft SAT14,Microsoft SAT40,Distinct San Antonio buildings
+never,Microsoft SAT40,Vantage TX1,Different operators ~1.4 km apart in San Antonio
+never,Firmus Southgate St Leonards,Firmus Southgate Bell Bay,Separate Tasmanian sites
+never,Google Bristow,Google Arcola,Distinct Loudoun County campuses
+never,Humain Riyadh,Korea National AI Computing Center,Unrelated
+merge,OpenAI Stargate Abilene,Stargate I (Abilene),"Both name the Lancium Clean Campus at Abilene; ""Stargate"" is a programme name spanning seven sites so it is not distinctive enough for automatic matching"
+merge,OpenAI Stargate Abilene,Stargate Abilene (OpenAI/Oracle Flagship),Same Abilene campus under a third naming convention
+merge,OpenAI Stargate Shackelford,Vantage Frontier,"Vantage is the landlord and Oracle the operator of the same ~1400 MW Shackelford County campus; the two records differ only in whose announcement they came from"
+merge,OpenAI Stargate Shackelford,Shackelford County Data Centers,Generic dataCenterView record for the same Shackelford County campus
+merge,AWS Berwick,AWS Salem Township Campus,"Berwick PA sits in Salem Township next to the Susquehanna nuclear plant - one AWS campus, two naming conventions"
+merge,Meta Temple,Temple Data Center,Same Meta campus at Temple TX
+never,OpenAI Stargate Abilene,OpenAI Stargate Shackelford,Two different Stargate sites ~20 km apart
+never,OpenAI Stargate Abilene,Crusoe Abilene,Adjacent but distinct builds on the Lancium campus
+never,OpenAI Stargate New Mexico,Stargate Dona Ana (Project Jupiter),"Epoch and the Oracle announcement describe the same project but the coordinates differ by ~60 km; kept separate pending a confirmed parcel"
