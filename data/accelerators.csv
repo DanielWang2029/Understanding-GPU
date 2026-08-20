@@ -1,0 +1,50 @@
+name,short_name,vendor,family,role,launch,launch_year,process,transistors_b,compute_dies,memory_gb,memory_type,mem_bw_tbs,onchip_sram_mb,fp16bf16_dense_tflops,fp8_dense_tflops,fp4_dense_tflops,fp64_tflops,tdp_w,scaleup_bw_gbs,scaleup_domain_chips,street_price_usd,price_confidence,notes
+Tesla V100 SXM2 32GB,V100,NVIDIA,Volta,training+inference,2018-Q2,2018,TSMC 12FFN,21.1,1,32,HBM2,0.90,6,125,,,7.8,300,300,8,,eol,FP16 only (no BF16/FP8); no structured sparsity on Volta
+A100 SXM4 40GB,A100 40GB,NVIDIA,Ampere,training+inference,2020-Q2,2020,TSMC N7,54.2,1,40,HBM2,1.555,40,312,,,9.7,400,600,8,12000,estimate,First TF32/BF16 tensor cores; MIG; 2:4 sparsity introduced
+A100 SXM4 80GB,A100 80GB,NVIDIA,Ampere,training+inference,2020-Q4,2020,TSMC N7,54.2,1,80,HBM2e,2.039,40,312,,,9.7,400,600,8,12500,estimate,Same compute as 40GB; memory upgrade only
+H100 SXM5 80GB,H100,NVIDIA,Hopper,training+inference,2022-Q3,2022,TSMC 4N,80.0,1,80,HBM3,3.35,50,989.5,1979,,34,700,900,8,30000,estimate,1st-gen Transformer Engine (FP8); TMA; thread-block clusters
+H100 PCIe 80GB,H100 PCIe,NVIDIA,Hopper,training+inference,2022-Q3,2022,TSMC 4N,80.0,1,80,HBM2e,2.00,50,756,1513,,26,350,600,2,24000,estimate,114 SMs vs 132 on SXM
+H200 SXM 141GB,H200,NVIDIA,Hopper,training+inference,2024-Q2,2024,TSMC 4N,80.0,1,141,HBM3e,4.80,50,989.5,1979,,34,700,900,8,35000,estimate,H100 compute with 1.76x memory and 1.43x bandwidth
+H20 (China SKU),H20,NVIDIA,Hopper,inference,2024-Q2,2024,TSMC 4N-class,,1,96,HBM3,4.00,60,148,148,,1,400,900,8,,unknown,Export-compliant: compute cut ~7x vs H100 but memory bandwidth higher
+GH200 Grace Hopper (HBM3e),GH200,NVIDIA,Hopper,training+inference,2024-Q1,2024,TSMC 4N,80.0,1,144,HBM3e,4.90,50,990,1979,,34,1000,900,256,,unknown,900 GB/s coherent NVLink-C2C to a 72-core Grace CPU with 480GB LPDDR5X; module TDP is 450-1000W programmable
+L40S,L40S,NVIDIA,Ada Lovelace,inference,2023-Q4,2023,TSMC 4N,76.3,1,48,GDDR6,0.864,96,362,733,,,350,64,1,8500,estimate,No HBM/NVLink/MIG; AV1 encode; universal inference+graphics card
+L4,L4,NVIDIA,Ada Lovelace,inference,2023-Q1,2023,TSMC 4N,,1,24,GDDR6,0.30,48,121,242,,,72,64,1,,unknown,72W single-slot; edge/video inference
+B100,B100,NVIDIA,Blackwell,training+inference,2024-Q4,2024,TSMC 4NP,208.0,2,192,HBM3e,8.00,126,1750,3500,7000,30,700,1800,8,32500,estimate,700W drop-in Hopper replacement; low volume
+B200 (HGX),B200 HGX,NVIDIA,Blackwell,training+inference,2025-Q1,2025,TSMC 4NP,208.0,2,180,HBM3e,7.70,126,2250,4500,9000,37,1000,1800,8,42000,estimate,192GB raw / 180GB usable per datasheet
+B200 (in GB200 NVL72),B200 NVL72,NVIDIA,Blackwell,training+inference,2025-Q1,2025,TSMC 4NP,208.0,2,186,HBM3e,8.00,126,2500,5000,10000,40,1200,1800,72,45000,estimate,72-GPU NVLink domain; 130 TB/s all-to-all
+B300 (in GB300 NVL72),B300 NVL72,NVIDIA,Blackwell Ultra,training+inference,2025-H2,2025,TSMC 4NP,208.0,2,279,HBM3e,8.00,,2500,5000,15000,1.3,1400,1800,72,51000,estimate,1.5x FP4 and 12-Hi HBM3e; FP64 cut 30x; PCIe Gen6
+Rubin R100 (Vera Rubin NVL72),Rubin R100,NVIDIA,Rubin,training+inference,2026-Q3,2026,TSMC N3 (reported),336.0,2,288,HBM4,22.00,,4000,17500,35000,33,,3600,72,,unknown,NVFP4 35 PF training / 50 PF inference as published; 3rd-gen Transformer Engine; LUT weights
+GeForce RTX 4090,RTX 4090,NVIDIA,Ada Lovelace,prosumer,2022-Q4,2022,TSMC 4N,76.3,1,24,GDDR6X,1.008,72,165.2,660.6,,,450,64,1,1599,list,Consumer reference point; no NVLink
+GeForce RTX 5090,RTX 5090,NVIDIA,Blackwell,prosumer,2025-Q1,2025,TSMC 4N,92.2,1,32,GDDR7,1.792,96,209.5,838,1676,,575,128,1,1999,list,Consumer FP4 support; no NVLink
+Instinct MI250X,MI250X,AMD,CDNA 2,training+HPC,2021-Q4,2021,TSMC N6,,2,128,HBM2e,3.20,,383,,,95.7,560,,8,,unknown,Frontier supercomputer part; FP64-heavy design
+Instinct MI300X,MI300X,AMD,CDNA 3,training+inference,2023-Q4,2023,TSMC N5/N6,153.0,8,192,HBM3,5.30,256,1307.4,2614.9,,163.4,750,896,8,16500,estimate,3D-stacked chiplets; 2.4x H100 HBM capacity
+Instinct MI325X,MI325X,AMD,CDNA 3,training+inference,2024-Q4,2024,TSMC N5/N6,153.0,8,256,HBM3e,6.00,256,1307.4,2614.9,,163.4,1000,896,8,20000,estimate,Memory-only upgrade over MI300X
+Instinct MI355X,MI355X,AMD,CDNA 4,training+inference,2025-Q2,2025,TSMC N3/N6,,8,288,HBM3e,8.00,256,2516.6,5033.2,10066.3,78.6,1400,1075,8,25000,estimate,MXFP4/MXFP6 support; FP64 halved vs MI300X
+Instinct MI455X (Helios),MI455X,AMD,CDNA 5,training+inference,2026-Q3,2026,2nm-class (reported),,8,432,HBM4,23.30,,5033,19400,40260,,,3611,72,,unknown,72-GPU UALink-over-Ethernet rack; 1.5x Rubin HBM capacity
+Gaudi 2,Gaudi 2,Intel,Gaudi,training+inference,2022-Q2,2022,TSMC N7,,1,96,HBM2e,2.46,48,432,865,,,600,600,8,8125,list,24x100GbE RoCE on-die; list price published by Intel
+Gaudi 3,Gaudi 3,Intel,Gaudi,training+inference,2024-Q3,2024,TSMC N5,,2,128,HBM2e,3.67,96,1835,1835,,14.3,900,1200,8,15625,list,FP8 = BF16 rate (no 2x FP8 speedup); networking included in price
+TPU v2,TPU v2,Google,TPU,training+inference,2017-Q3,2017,16nm,9.0,1,16,HBM,0.70,32,46,,,,280,248,256,,cloud-only,First trainable TPU; 128x128 MXU
+TPU v3,TPU v3,Google,TPU,training+inference,2018-Q4,2018,16nm,10.0,1,32,HBM,0.90,32,123,,,,450,280,1024,,cloud-only,2 MXUs per TensorCore; liquid cooled
+TPU v4,TPU v4,Google,TPU,training+inference,2020-Q4,2020,7nm,22.0,1,32,HBM2,1.20,170,275,275,,,,300,4096,,cloud-only,First OCS-reconfigurable 3D torus; 128MB CMEM; 4 SparseCores
+TPU v5e,TPU v5e,Google,TPU,inference+training,2023-Q3,2023,,,1,16,HBM2e,0.80,,197,393,,,,400,256,,cloud-only,Cost-optimized single-TensorCore part; INT8 393 TOPS
+TPU v5p,TPU v5p,Google,TPU,training,2023-Q4,2023,,,1,95,HBM2e,2.765,,459,459,,,,1200,8960,,cloud-only,Megacore 2 TensorCores; 3D torus; multislice to 18432 chips
+TPU v6e (Trillium),TPU v6e,Google,TPU,training+inference,2024-Q4,2024,,,1,32,HBM,1.638,,918,918,,,,800,256,,cloud-only,First 256x256 MXU; 1.8x perf/$ vs v5p per Google
+TPU v7 (Ironwood),TPU v7,Google,TPU,training+inference,2025-Q4,2025,TSMC N3P (reported),,2,192,HBM3E,7.38,128,2307,4614,,,1000,1200,9216,,cloud-only,First dual-die TPU; 1.77PB shared HBM per pod; ~10MW pod
+TPU 8t,TPU 8t,Google,TPU,training,2026-H2,2026,,,,216,HBM,6.528,128,,,12600,,,,9600,,cloud-only,Native FP4 MXU; 3D torus + Virgo fabric to >134k chips
+TPU 8i,TPU 8i,Google,TPU,inference,2026-H2,2026,,,,288,HBM,8.601,384,,,10100,,,,1152,,cloud-only,Boardfly high-radix topology; CAE replaces SparseCore
+Trainium1,Trainium1,AWS,Trainium,training,2022-Q4,2022,,,1,32,HBM,0.80,48,191,191,,48,,384,16,,cloud-only,2 NeuronCore-v2
+Trainium2,Trainium2,AWS,Trainium,training+inference,2024-Q4,2024,,,1,96,HBM,2.90,224,667,1299,,181,,1280,64,,cloud-only,8 NeuronCore-v3; Trn2 UltraServer = 64 chips
+Trainium3,Trainium3,AWS,Trainium,training+inference,2025-Q4,2025,TSMC N3,,,144,HBM3e,4.90,,671,2517,2517,183,,2048,144,,cloud-only,First AWS 3nm chip; 144-chip UltraServer = 362 PFLOPS MXFP8
+Inferentia2,Inferentia2,AWS,Inferentia,inference,2023-Q1,2023,,,1,32,HBM,0.82,,190,190,,47.5,,,,,cloud-only,cFP8; inference-only sibling of Trainium1
+Ascend 910B,Ascend 910B,Huawei,DaVinci,training+inference,2023-Q3,2023,SMIC N+1/N+2,,1,64,HBM2e,1.60,,400,,,,,,,10000,estimate,Estimated FP16; domestic alternative under export controls
+Ascend 910C,Ascend 910C,Huawei,DaVinci v2,training+inference,2025-Q1,2025,SMIC 7nm,,2,128,HBM2e,3.20,,780,,,50,600,350,384,15000,estimate,No native FP8/FP4; CloudMatrix 384 system uses 559kW
+MTIA v2,MTIA v2,Meta,MTIA,inference,2024-Q2,2024,TSMC N5,2.35,1,128,LPDDR5,0.205,256,177,,,,90,,,,internal,Recommendation/ranking inference; 2:4 sparsity shipped but unused in production
+MTIA 300,MTIA 300,Meta,MTIA,training+inference,2026-Q1,2026,,,,216,HBM,6.10,,,1200,,,800,,,,internal,Ranking and recommendation training
+MTIA 400,MTIA 400,Meta,MTIA,inference,2026-H2,2026,,,2,288,HBM,9.20,,3000,6000,12000,,1200,150,72,,internal,First MTIA aimed at competitive raw performance
+Maia 100,Maia 100,Microsoft,Maia,inference,2024-Q2,2024,TSMC N5,105.0,1,64,HBM2E,1.80,500,800,,,,500,600,,,internal,Deliberately used HBM2E to avoid HBM3 supply contention
+Maia 200,Maia 200,Microsoft,Maia,inference+RL,2026-Q1,2026,TSMC N3P,140.0,,216,HBM3e,7.00,272,1268,5072,10145,,750,2800,6144,,internal,Software-managed SRAM; Ethernet scale-up with custom AI Transport Layer
+Cerebras WSE-3,WSE-3,Cerebras,Wafer-scale,training+inference,2024-Q1,2024,TSMC N5,4000.0,1,44,SRAM (on-wafer),21000.0,44000,,,,,23000,,1,,system-only,46225 mm2 wafer; 900k cores; 125 PFLOPS figure is sparse FP16
+Groq LPU v1,Groq LPU,Groq,LPU,inference,2022-Q1,2022,GF 14nm,,1,0.23,SRAM only,80.0,230,188,,,,215,,1,,system-only,No DRAM at all; 576 LPUs needed to serve Llama 2 70B
+Groq 3 LPU (NVIDIA LPX),Groq 3,NVIDIA,LPU,inference,2026-Q3,2026,Samsung SF4X,98.0,1,0.5,SRAM only,150.0,512,,1230,,,,2500,256,,system-only,Shipped by NVIDIA after $20B Groq licensing deal; replaced Rubin CPX
+SambaNova SN40L,SN40L,SambaNova,RDU,inference,2024-Q3,2024,TSMC N5,102.0,2,64,HBM+1.5TB DDR,1.80,520,640,,,,,,16,,system-only,Three-tier memory for instant model switching
+Tenstorrent Blackhole p150a,Blackhole p150a,Tenstorrent,Blackhole,dev+inference,2025-Q2,2025,TSMC N6,,1,32,GDDR6,0.512,180,332,664,,83,300,400,32,1399,list,Open-source RISC-V stack; retail developer card

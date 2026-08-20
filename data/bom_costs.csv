@@ -1,0 +1,7 @@
+chip,logic_die_usd,hbm_usd,packaging_usd,other_usd,total_mfg_usd,modeled_sell_usd,confidence,note
+H100 SXM5,300,1350,750,920,3320,28000,estimate,Raymond James teardown lineage; 814mm2 4N die + 5-6 HBM3 stacks on CoWoS-S
+H200 SXM5,300,1500,750,1700,4250,38000,estimate,Same die as H100 with 141GB HBM3e
+B200,850,2900,1100,1550,6400,40000,estimate,2x ~800mm2 dies on CoWoS-L + 8 HBM3e stacks
+GB200 superchip,1700,5800,2200,3800,13500,65000,estimate,Grace CPU + 2x B200
+MI300X,600,2900,1500,300,5300,15000,estimate,Chiplet + SoIC 3D stacking; 192GB HBM3
+Gaudi 3,1500,1950,1200,1350,6000,15625,estimate,Sell price is Intel's published list price divided by 8

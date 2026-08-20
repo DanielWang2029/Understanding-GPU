@@ -1,0 +1,19 @@
+cause,category,count
+Faulty GPU,GPU,148
+GPU HBM3 memory,GPU,72
+Software bug,Dependency,54
+Network switch/cable,Network,35
+Host maintenance,Host,32
+GPU SRAM memory,GPU,19
+GPU system processor,GPU,17
+NIC,Host,7
+NCCL watchdog timeout,Unknown,7
+Silent data corruption,GPU,6
+GPU thermal interface/sensor,GPU,6
+SSD,Host,3
+Power supply,Host,3
+Server chassis,Host,2
+IO expansion board,Host,2
+Dependency,Dependency,2
+CPU,Host,2
+System memory,Host,2

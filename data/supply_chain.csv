@@ -1,0 +1,33 @@
+category,item,year,value,unit,confidence,note
+cowos_capacity,TSMC CoWoS,2024,37500,wafers_per_month,estimate,TrendForce midpoint of 35-40k
+cowos_capacity,TSMC CoWoS,2025,75000,wafers_per_month,estimate,TrendForce 70-80k
+cowos_capacity,TSMC CoWoS,2026,130000,wafers_per_month,estimate,TrendForce target 120-140k
+cowos_capacity,TSMC CoWoS,2027,208000,wafers_per_month,estimate,>60% further expansion planned
+cowos_demand,Industry CoWoS demand,2024,370000,wafers_per_year,estimate,Morgan Stanley / TrendForce
+cowos_demand,Industry CoWoS demand,2025,670000,wafers_per_year,estimate,
+cowos_demand,Industry CoWoS demand,2026,1000000,wafers_per_year,estimate,Approaching 1M wafers
+wafer_price,TSMC N7,2018,10000,usd_per_wafer,estimate,
+wafer_price,TSMC N5,2020,17000,usd_per_wafer,estimate,Midpoint 16-18k
+wafer_price,TSMC N3,2026,21500,usd_per_wafer,estimate,2026 price after 5-10% increase
+wafer_price,TSMC N2,2026,30000,usd_per_wafer,estimate,Channel-check figure; TrendForce argues real premium is 10-20% not 50%
+wafer_price,TSMC A16,2026,45000,usd_per_wafer,rumor,H2 2026
+hbm_share,SK hynix,2026,56,percent,estimate,Mid-50s share of NVIDIA HBM4 allocation
+hbm_share,Samsung,2026,24,percent,estimate,Mid-20s
+hbm_share,Micron,2026,20,percent,estimate,Overtook Samsung on some allocations
+hbm_price,HBM3 stack,2023,200,usd_per_stack,estimate,
+hbm_price,HBM3E 8-Hi stack,2025,300,usd_per_stack,estimate,~$7-8/GB
+hbm_price,HBM4 12-Hi 36GB stack,2026,550,usd_per_stack,estimate,+55-70% vs HBM3E
+shipments,NVIDIA Blackwell,2025,5200000,units,rumor,Aggregator estimate - internally inconsistent with revenue growth
+shipments,NVIDIA Hopper,2025,1500000,units,rumor,
+shipments,Google TPU v6/v7,2026,2700000,units,estimate,SemiAnalysis Aug 2026 revision down from 3.2M
+shipments,AWS Trainium2/3,2026,600000,units,estimate,
+shipments,AMD Instinct,2026,538000,units,estimate,MI300X/325X plus MI355X/MI400 family
+shipments,Intel Gaudi 3,2026,100000,units,estimate,
+shipments,Microsoft Maia,2026,250000,units,estimate,
+shipments,Meta MTIA,2026,180000,units,estimate,
+shipments,Huawei Ascend 910C,2026,600000,units,estimate,Reuters-reported production target
+rack_power,GB200 NVL72,2025,132,kW,confirmed,120-132kW liquid cooled
+rack_power,GB300 NVL72,2025,140,kW,estimate,
+rack_power,AMD Helios (MI455X),2026,130,kW,estimate,125-135kW class OCP Open Rack Wide
+rack_power,Cerebras CS-4 rack,2026,130,kW,estimate,120-140kW
+rack_power,TPU v7 pod (9216 chips),2025,10000,kW,confirmed,Nearly 10MW per superpod

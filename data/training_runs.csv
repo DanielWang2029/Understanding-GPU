@@ -1,0 +1,15 @@
+model,org,year,params_b,active_params_b,tokens_t,training_flops,hardware,chip_count,chip_hours_m,mfu,confidence,note
+GPT-3 175B,OpenAI,2020,175,175,0.30,3.14e23,V100,,,,estimate,Epoch AI estimate
+Chinchilla 70B,DeepMind,2022,70,70,1.40,5.76e23,TPU v3/v4,,,,confirmed,Compute-optimal reference point (20 tokens/param)
+PaLM 540B,Google,2022,540,540,0.78,2.53e24,TPU v4,6144,,0.462,confirmed,Two 3072-chip v4 pods; 46.2% MFU reported
+Llama 2 70B,Meta,2023,70,70,2.00,8.40e23,A100 80GB,,1.72,,confirmed,1720320 A100-hours reported in paper
+GPT-4,OpenAI,2023,1800,280,13.00,2.10e25,A100,25000,,,estimate,Params/tokens from leaks; compute from Epoch AI
+Gemini 1.0 Ultra,Google,2023,,,,5.00e25,TPU v4,,,,estimate,Epoch AI low-precision estimate; multi-datacenter TPUv4 fleet
+Apple AFM-server,Apple,2024,,,,,TPU v4,8192,,,confirmed,8 slices of 1024 chips over DCN
+Llama 3.1 405B,Meta,2024,405,405,15.60,3.80e25,H100 80GB,16384,30.84,0.41,confirmed,4D parallelism TP8/CP1/PP16/DP128; 38-43% BF16 MFU
+DeepSeek-V3,DeepSeek,2024,671,37,14.80,3.70e24,H800,2048,2.788,,confirmed,First validated FP8 frontier run; $5.576M claimed rental cost
+Grok-2,xAI,2024,,,,3.00e25,H100,,,,estimate,Epoch AI estimate
+NVFP4 12B,NVIDIA,2025,12,12,10.00,7.20e23,Blackwell,,,,confirmed,Longest documented 4-bit pretraining run
+Grok-3,xAI,2025,,,,4.60e26,H100/H200 Colossus,150000,,,estimate,Epoch AI estimate; Colossus cluster
+GPT-4.5,OpenAI,2025,,,,3.80e26,H100 Azure,,,,estimate,Epoch AI estimate
+Grok 4,xAI,2025,,,,5.00e26,H100/H200 Colossus,,,,estimate,Epoch AI estimate
