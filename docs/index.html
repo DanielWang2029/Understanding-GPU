@@ -106,6 +106,7 @@ footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
   <a class="h3" href="#45-what-mfu-you-should-actually-expect">4.5 What MFU you should actually expect</a>
   <a class="h3" href="#46-reliability-is-a-hardware-specification">4.6 Reliability is a hardware specification</a>
   <a class="h2" href="#5-the-nvidia-lineup">5. The NVIDIA lineup</a>
+  <a class="h3" href="#the-catalogue-at-a-glance">The catalogue at a glance</a>
   <a class="h3" href="#51-datacenter-training-and-inference-parts">5.1 Datacenter training and inference parts</a>
   <a class="h3" href="#52-inference-and-prosumer-parts">5.2 Inference and prosumer parts</a>
   <a class="h3" href="#53-rack-scale-systems">5.3 Rack-scale systems</a>
@@ -921,6 +922,366 @@ footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
 <p>TPUs attack the same problem at the topology layer: a failed cube is optically bypassed and a spare swapped in, so the job resumes on a <em>logically identical</em> mesh — which matters enormously in a compiler-first stack where the mesh shape is baked into the compiled program.</p>
 <hr />
 <h2 id="5-the-nvidia-lineup">5. The NVIDIA lineup</h2>
+<h3 id="the-catalogue-at-a-glance">The catalogue at a glance</h3>
+<p>Sections 5 through 8 go vendor by vendor. This is the index: every accelerator in this report, who built it, what it was built for, and — the part most comparisons omit — whether you can actually obtain one.</p>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Vendor</th>
+<th>Launch</th>
+<th>Built for</th>
+<th>How you get it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>V100</strong></td>
+<td>NVIDIA</td>
+<td>2018-Q2</td>
+<td>training + inference</td>
+<td>end of life, secondary market</td>
+</tr>
+<tr>
+<td><strong>A100 40GB</strong></td>
+<td>NVIDIA</td>
+<td>2020-Q2</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>A100 80GB</strong></td>
+<td>NVIDIA</td>
+<td>2020-Q4</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>H100</strong></td>
+<td>NVIDIA</td>
+<td>2022-Q3</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>H100 PCIe</strong></td>
+<td>NVIDIA</td>
+<td>2022-Q3</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>RTX 4090</strong></td>
+<td>NVIDIA</td>
+<td>2022-Q4</td>
+<td>prosumer</td>
+<td>purchasable, list price published</td>
+</tr>
+<tr>
+<td><strong>L4</strong></td>
+<td>NVIDIA</td>
+<td>2023-Q1</td>
+<td>inference</td>
+<td>purchasable, price undisclosed</td>
+</tr>
+<tr>
+<td><strong>L40S</strong></td>
+<td>NVIDIA</td>
+<td>2023-Q4</td>
+<td>inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>B100</strong></td>
+<td>NVIDIA</td>
+<td>2024-Q4</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>GH200</strong></td>
+<td>NVIDIA</td>
+<td>2024-Q1</td>
+<td>training + inference</td>
+<td>purchasable, price undisclosed</td>
+</tr>
+<tr>
+<td><strong>H20</strong></td>
+<td>NVIDIA</td>
+<td>2024-Q2</td>
+<td>inference</td>
+<td>purchasable, price undisclosed</td>
+</tr>
+<tr>
+<td><strong>H200</strong></td>
+<td>NVIDIA</td>
+<td>2024-Q2</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>B200 HGX</strong></td>
+<td>NVIDIA</td>
+<td>2025-Q1</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>B200 NVL72</strong></td>
+<td>NVIDIA</td>
+<td>2025-Q1</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>B300 NVL72</strong></td>
+<td>NVIDIA</td>
+<td>2025-H2</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>RTX 5090</strong></td>
+<td>NVIDIA</td>
+<td>2025-Q1</td>
+<td>prosumer</td>
+<td>purchasable, list price published</td>
+</tr>
+<tr>
+<td><strong>Groq 3</strong></td>
+<td>NVIDIA</td>
+<td>2026-Q3</td>
+<td>inference</td>
+<td>sold as a system, price on application</td>
+</tr>
+<tr>
+<td><strong>Rubin R100</strong></td>
+<td>NVIDIA</td>
+<td>2026-Q3</td>
+<td>training + inference</td>
+<td>purchasable, price undisclosed</td>
+</tr>
+<tr>
+<td><strong>MI250X</strong></td>
+<td>AMD</td>
+<td>2021-Q4</td>
+<td>training + HPC</td>
+<td>purchasable, price undisclosed</td>
+</tr>
+<tr>
+<td><strong>MI300X</strong></td>
+<td>AMD</td>
+<td>2023-Q4</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>MI325X</strong></td>
+<td>AMD</td>
+<td>2024-Q4</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>MI355X</strong></td>
+<td>AMD</td>
+<td>2025-Q2</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>MI455X</strong></td>
+<td>AMD</td>
+<td>2026-Q3</td>
+<td>training + inference</td>
+<td>purchasable, price undisclosed</td>
+</tr>
+<tr>
+<td><strong>Gaudi 2</strong></td>
+<td>Intel</td>
+<td>2022-Q2</td>
+<td>training + inference</td>
+<td>purchasable, list price published</td>
+</tr>
+<tr>
+<td><strong>Gaudi 3</strong></td>
+<td>Intel</td>
+<td>2024-Q3</td>
+<td>training + inference</td>
+<td>purchasable, list price published</td>
+</tr>
+<tr>
+<td><strong>TPU v2</strong></td>
+<td>Google</td>
+<td>2017-Q3</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU v3</strong></td>
+<td>Google</td>
+<td>2018-Q4</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU v4</strong></td>
+<td>Google</td>
+<td>2020-Q4</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU v5e</strong></td>
+<td>Google</td>
+<td>2023-Q3</td>
+<td>inference + training</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU v5p</strong></td>
+<td>Google</td>
+<td>2023-Q4</td>
+<td>training</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU v6e</strong></td>
+<td>Google</td>
+<td>2024-Q4</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU v7</strong></td>
+<td>Google</td>
+<td>2025-Q4</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU 8i</strong></td>
+<td>Google</td>
+<td>2026-H2</td>
+<td>inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>TPU 8t</strong></td>
+<td>Google</td>
+<td>2026-H2</td>
+<td>training</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>Trainium1</strong></td>
+<td>AWS</td>
+<td>2022-Q4</td>
+<td>training</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>Inferentia2</strong></td>
+<td>AWS</td>
+<td>2023-Q1</td>
+<td>inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>Trainium2</strong></td>
+<td>AWS</td>
+<td>2024-Q4</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>Trainium3</strong></td>
+<td>AWS</td>
+<td>2025-Q4</td>
+<td>training + inference</td>
+<td>rentable from one cloud only</td>
+</tr>
+<tr>
+<td><strong>MTIA v2</strong></td>
+<td>Meta</td>
+<td>2024-Q2</td>
+<td>inference</td>
+<td>not for sale (first-party use)</td>
+</tr>
+<tr>
+<td><strong>MTIA 300</strong></td>
+<td>Meta</td>
+<td>2026-Q1</td>
+<td>training + inference</td>
+<td>not for sale (first-party use)</td>
+</tr>
+<tr>
+<td><strong>MTIA 400</strong></td>
+<td>Meta</td>
+<td>2026-H2</td>
+<td>inference</td>
+<td>not for sale (first-party use)</td>
+</tr>
+<tr>
+<td><strong>Maia 100</strong></td>
+<td>Microsoft</td>
+<td>2024-Q2</td>
+<td>inference</td>
+<td>not for sale (first-party use)</td>
+</tr>
+<tr>
+<td><strong>Maia 200</strong></td>
+<td>Microsoft</td>
+<td>2026-Q1</td>
+<td>inference + RL</td>
+<td>not for sale (first-party use)</td>
+</tr>
+<tr>
+<td><strong>Ascend 910B</strong></td>
+<td>Huawei</td>
+<td>2023-Q3</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>Ascend 910C</strong></td>
+<td>Huawei</td>
+<td>2025-Q1</td>
+<td>training + inference</td>
+<td>purchasable, price by quote</td>
+</tr>
+<tr>
+<td><strong>WSE-3</strong></td>
+<td>Cerebras</td>
+<td>2024-Q1</td>
+<td>training + inference</td>
+<td>sold as a system, price on application</td>
+</tr>
+<tr>
+<td><strong>Groq LPU</strong></td>
+<td>Groq</td>
+<td>2022-Q1</td>
+<td>inference</td>
+<td>sold as a system, price on application</td>
+</tr>
+<tr>
+<td><strong>SN40L</strong></td>
+<td>SambaNova</td>
+<td>2024-Q3</td>
+<td>inference</td>
+<td>sold as a system, price on application</td>
+</tr>
+<tr>
+<td><strong>Blackhole p150a</strong></td>
+<td>Tenstorrent</td>
+<td>2025-Q2</td>
+<td>dev + inference</td>
+<td>purchasable, list price published</td>
+</tr>
+</tbody>
+</table>
+<p>Four availability models are worth separating, because they determine whether a specification is actionable for you at all. <strong>Purchasable merchant silicon</strong> (NVIDIA, AMD, Intel, Tenstorrent) has real price discovery and you can run it anywhere. <strong>Cloud-only silicon</strong> (TPU, Trainium, Inferentia) is rentable from exactly one provider, so its price is that provider's decision rather than a market's. <strong>First-party silicon</strong> (MTIA, Maia 100) is not for sale at all and exists purely to reduce its owner's costs — though Microsoft has said Maia 200 will eventually be leasable. <strong>System-only silicon</strong> (Cerebras, Groq/LPX, SambaNova) is sold as a rack or consumed as an API, and per-chip specifications are close to meaningless for it.</p>
+<p>One caveat the table cannot express: Huawei Ascend is "purchasable" only inside China. Huawei is on the US Entity List, so no Western provider rents Ascend capacity and no dollar-per-hour price exists for it.</p>
 <p><img alt="Per-chip throughput 2017-2026" src="figures/fig09_compute_timeline.png" /></p>
 <h3 id="51-datacenter-training-and-inference-parts">5.1 Datacenter training and inference parts</h3>
 <table>

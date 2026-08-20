@@ -92,6 +92,39 @@ def _spec_rows(names: list[str], price=True) -> tuple[list[str], list[list[str]]
     return header, rows
 
 
+AVAILABILITY = {
+    "list": "purchasable, list price published",
+    "estimate": "purchasable, price by quote",
+    "unknown": "purchasable, price undisclosed",
+    "cloud-only": "rentable from one cloud only",
+    "internal": "not for sale (first-party use)",
+    "system-only": "sold as a system, price on application",
+    "eol": "end of life, secondary market",
+}
+
+
+def table_index():
+    header = ["Accelerator", "Vendor", "Launch", "Built for", "How you get it"]
+    rows = []
+    d = ACC.copy()
+    d["vendor_order"] = d.vendor.map(
+        {"NVIDIA": 0, "AMD": 1, "Intel": 2, "Google": 3, "AWS": 4, "Meta": 5,
+         "Microsoft": 6, "Huawei": 7, "Cerebras": 8, "Groq": 9, "SambaNova": 10,
+         "Tenstorrent": 11}
+    ).fillna(99)
+    d = d.sort_values(["vendor_order", "launch_year", "short_name"])
+    for _, r in d.iterrows():
+        avail = AVAILABILITY.get(str(r.price_confidence), "—")
+        rows.append([
+            f"**{r.short_name}**",
+            str(r.vendor),
+            str(r.launch),
+            str(r.role).replace("+", " + "),
+            avail,
+        ])
+    return _table(header, rows)
+
+
 def table_nvidia_training():
     names = ["V100", "A100 40GB", "A100 80GB", "H100", "H100 PCIe", "H200", "H20",
              "GH200", "B100", "B200 HGX", "B200 NVL72", "B300 NVL72", "Rubin R100"]
@@ -236,6 +269,7 @@ def table_training_runs():
 
 
 TABLES = {
+    "index": table_index,
     "nvidia_training": table_nvidia_training,
     "nvidia_inference": table_nvidia_inference,
     "amd": table_amd,

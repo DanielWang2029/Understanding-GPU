@@ -431,6 +431,66 @@ TPUs attack the same problem at the topology layer: a failed cube is optically b
 
 ## 5. The NVIDIA lineup
 
+### The catalogue at a glance
+
+Sections 5 through 8 go vendor by vendor. This is the index: every accelerator in this report, who built it, what it was built for, and — the part most comparisons omit — whether you can actually obtain one.
+
+| Accelerator | Vendor | Launch | Built for | How you get it |
+| --- | --- | --- | --- | --- |
+| **V100** | NVIDIA | 2018-Q2 | training + inference | end of life, secondary market |
+| **A100 40GB** | NVIDIA | 2020-Q2 | training + inference | purchasable, price by quote |
+| **A100 80GB** | NVIDIA | 2020-Q4 | training + inference | purchasable, price by quote |
+| **H100** | NVIDIA | 2022-Q3 | training + inference | purchasable, price by quote |
+| **H100 PCIe** | NVIDIA | 2022-Q3 | training + inference | purchasable, price by quote |
+| **RTX 4090** | NVIDIA | 2022-Q4 | prosumer | purchasable, list price published |
+| **L4** | NVIDIA | 2023-Q1 | inference | purchasable, price undisclosed |
+| **L40S** | NVIDIA | 2023-Q4 | inference | purchasable, price by quote |
+| **B100** | NVIDIA | 2024-Q4 | training + inference | purchasable, price by quote |
+| **GH200** | NVIDIA | 2024-Q1 | training + inference | purchasable, price undisclosed |
+| **H20** | NVIDIA | 2024-Q2 | inference | purchasable, price undisclosed |
+| **H200** | NVIDIA | 2024-Q2 | training + inference | purchasable, price by quote |
+| **B200 HGX** | NVIDIA | 2025-Q1 | training + inference | purchasable, price by quote |
+| **B200 NVL72** | NVIDIA | 2025-Q1 | training + inference | purchasable, price by quote |
+| **B300 NVL72** | NVIDIA | 2025-H2 | training + inference | purchasable, price by quote |
+| **RTX 5090** | NVIDIA | 2025-Q1 | prosumer | purchasable, list price published |
+| **Groq 3** | NVIDIA | 2026-Q3 | inference | sold as a system, price on application |
+| **Rubin R100** | NVIDIA | 2026-Q3 | training + inference | purchasable, price undisclosed |
+| **MI250X** | AMD | 2021-Q4 | training + HPC | purchasable, price undisclosed |
+| **MI300X** | AMD | 2023-Q4 | training + inference | purchasable, price by quote |
+| **MI325X** | AMD | 2024-Q4 | training + inference | purchasable, price by quote |
+| **MI355X** | AMD | 2025-Q2 | training + inference | purchasable, price by quote |
+| **MI455X** | AMD | 2026-Q3 | training + inference | purchasable, price undisclosed |
+| **Gaudi 2** | Intel | 2022-Q2 | training + inference | purchasable, list price published |
+| **Gaudi 3** | Intel | 2024-Q3 | training + inference | purchasable, list price published |
+| **TPU v2** | Google | 2017-Q3 | training + inference | rentable from one cloud only |
+| **TPU v3** | Google | 2018-Q4 | training + inference | rentable from one cloud only |
+| **TPU v4** | Google | 2020-Q4 | training + inference | rentable from one cloud only |
+| **TPU v5e** | Google | 2023-Q3 | inference + training | rentable from one cloud only |
+| **TPU v5p** | Google | 2023-Q4 | training | rentable from one cloud only |
+| **TPU v6e** | Google | 2024-Q4 | training + inference | rentable from one cloud only |
+| **TPU v7** | Google | 2025-Q4 | training + inference | rentable from one cloud only |
+| **TPU 8i** | Google | 2026-H2 | inference | rentable from one cloud only |
+| **TPU 8t** | Google | 2026-H2 | training | rentable from one cloud only |
+| **Trainium1** | AWS | 2022-Q4 | training | rentable from one cloud only |
+| **Inferentia2** | AWS | 2023-Q1 | inference | rentable from one cloud only |
+| **Trainium2** | AWS | 2024-Q4 | training + inference | rentable from one cloud only |
+| **Trainium3** | AWS | 2025-Q4 | training + inference | rentable from one cloud only |
+| **MTIA v2** | Meta | 2024-Q2 | inference | not for sale (first-party use) |
+| **MTIA 300** | Meta | 2026-Q1 | training + inference | not for sale (first-party use) |
+| **MTIA 400** | Meta | 2026-H2 | inference | not for sale (first-party use) |
+| **Maia 100** | Microsoft | 2024-Q2 | inference | not for sale (first-party use) |
+| **Maia 200** | Microsoft | 2026-Q1 | inference + RL | not for sale (first-party use) |
+| **Ascend 910B** | Huawei | 2023-Q3 | training + inference | purchasable, price by quote |
+| **Ascend 910C** | Huawei | 2025-Q1 | training + inference | purchasable, price by quote |
+| **WSE-3** | Cerebras | 2024-Q1 | training + inference | sold as a system, price on application |
+| **Groq LPU** | Groq | 2022-Q1 | inference | sold as a system, price on application |
+| **SN40L** | SambaNova | 2024-Q3 | inference | sold as a system, price on application |
+| **Blackhole p150a** | Tenstorrent | 2025-Q2 | dev + inference | purchasable, list price published |
+
+Four availability models are worth separating, because they determine whether a specification is actionable for you at all. **Purchasable merchant silicon** (NVIDIA, AMD, Intel, Tenstorrent) has real price discovery and you can run it anywhere. **Cloud-only silicon** (TPU, Trainium, Inferentia) is rentable from exactly one provider, so its price is that provider's decision rather than a market's. **First-party silicon** (MTIA, Maia 100) is not for sale at all and exists purely to reduce its owner's costs — though Microsoft has said Maia 200 will eventually be leasable. **System-only silicon** (Cerebras, Groq/LPX, SambaNova) is sold as a rack or consumed as an API, and per-chip specifications are close to meaningless for it.
+
+One caveat the table cannot express: Huawei Ascend is "purchasable" only inside China. Huawei is on the US Entity List, so no Western provider rents Ascend capacity and no dollar-per-hour price exists for it.
+
 ![Per-chip throughput 2017-2026](figures/fig09_compute_timeline.png)
 
 ### 5.1 Datacenter training and inference parts

@@ -2,6 +2,16 @@
 
 ## 5. The NVIDIA lineup
 
+### The catalogue at a glance
+
+Sections 5 through 8 go vendor by vendor. This is the index: every accelerator in this report, who built it, what it was built for, and — the part most comparisons omit — whether you can actually obtain one.
+
+<!-- TABLE:index -->
+
+Four availability models are worth separating, because they determine whether a specification is actionable for you at all. **Purchasable merchant silicon** (NVIDIA, AMD, Intel, Tenstorrent) has real price discovery and you can run it anywhere. **Cloud-only silicon** (TPU, Trainium, Inferentia) is rentable from exactly one provider, so its price is that provider's decision rather than a market's. **First-party silicon** (MTIA, Maia 100) is not for sale at all and exists purely to reduce its owner's costs — though Microsoft has said Maia 200 will eventually be leasable. **System-only silicon** (Cerebras, Groq/LPX, SambaNova) is sold as a rack or consumed as an API, and per-chip specifications are close to meaningless for it.
+
+One caveat the table cannot express: Huawei Ascend is "purchasable" only inside China. Huawei is on the US Entity List, so no Western provider rents Ascend capacity and no dollar-per-hour price exists for it.
+
 ![Per-chip throughput 2017-2026](figures/fig09_compute_timeline.png)
 
 ### 5.1 Datacenter training and inference parts
