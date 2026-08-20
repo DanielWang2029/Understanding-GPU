@@ -492,6 +492,7 @@ function tooltipHtml(d) {
 /* -------------------------------------------------------------- navigation */
 function drillToContinent(name) {
   svg.interrupt();
+  renderDetail(null);
   state.level = "continent";
   state.continent = name;
   state.country = null;
@@ -503,6 +504,7 @@ function drillToContinent(name) {
 
 function drillToCountry(iso3, continent) {
   svg.interrupt();
+  renderDetail(null);
   const meta = Object.values(DATA.country_index).find(m => m.iso3 === iso3);
   state.level = "country";
   state.continent = continent || (meta ? meta.continent : state.continent);
@@ -523,6 +525,7 @@ function drillToCountry(iso3, continent) {
 
 function goUp() {
   svg.interrupt();
+  renderDetail(null);
   if (state.level === "country") {
     const cont = state.continent;
     state.level = "continent";
@@ -537,6 +540,7 @@ function goUp() {
 
 function goWorld() {
   svg.interrupt();
+  renderDetail(null);
   state.level = "world";
   state.continent = null;
   state.country = null;
