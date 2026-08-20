@@ -11,6 +11,10 @@ Two things live here:
 
 **→ Open the map: [`docs/compute-map/index.html`](docs/compute-map/index.html)** ([how it works](docs/compute-map/README.md))
 
+**3. An entity atlas** — the entity-relation grid behind both, plus a search over every source URL showing how each one was recognised as being about which companies, accelerators and data centers.
+
+**→ Open the atlas: [`docs/entity-atlas/index.html`](docs/entity-atlas/index.html)** ([how it works](docs/entity-atlas/README.md))
+
 Everything is generated from the datasets in [`data/`](data/), so any number can be traced, corrected and re-plotted.
 
 ## What is in the report
@@ -34,6 +38,15 @@ Everything is generated from the datasets in [`data/`](data/), so any number can
 
 631 physical sites and 53 cloud regions, covering both **currently available** and **planned** capacity, built from four sources: the uploaded **dataCenterView** project (490 US sites, 1,115 source URLs), **Epoch AI**'s frontier data-center dataset (83 sites with modelled power, chip counts and forward timelines, CC-BY), **95 curated non-US sites** across 31 countries, and **53 cloud regions** documenting where TPU, Trainium and GPU SKUs can actually be rented. Records describing the same campus are merged into one site — `xAI Colossus 2` and `Colossus 2`, or the five records behind `OpenAI Stargate Abilene` — with the merge reason and every contributing source shown in the panel. See [`docs/compute-map/README.md`](docs/compute-map/README.md) for the deduplication rules and the coverage caveats.
 
+## What is in the entity atlas
+
+| View | Contents |
+|---|---|
+| Entity grid | 834 entities in 6 types (company, accelerator, data center, cloud region, supply chain, country) and 1,850 derived relations; select any entity to draw its relations across the grid |
+| Source search | 1,255 unique source URLs with 4,619 entity recognitions; pick any number of entities and every matching source is listed, each opening its own page |
+
+Each source page shows **how** it was linked to each entity — `record` (a field of the dataset record it was filed against), `domain` (the host belongs to that entity), `path` (an alias in the URL), or `context` (an alias in the text that travelled with the link) — together with the matched span, the datasets that cite it, and the records it was attached to.
+
 ## Repository layout
 
 ```
@@ -47,11 +60,14 @@ scripts/tables.py            markdown tables generated from the CSVs
 scripts/build_site.py        assembles report/report.md and docs/index.html
 scripts/geocode_sites.py     geocodes Epoch addresses into a committed cache
 scripts/build_compute_map.py normalises, dedupes and rolls up the map dataset
+scripts/build_entity_atlas.py entity registry, relation derivation, source recognition
 report/sections/             the report source, one markdown file per section
 report/report.md             the assembled single-file report
 report/figures/              24 generated PNGs
 docs/index.html              the report as an HTML site
 docs/compute-map/            the interactive map (D3 + topojson vendored locally)
+docs/entity-atlas/           the entity-relation grid and source search (no dependencies)
+references/                  the uploaded dataCenterView project and UI reference
 ```
 
 ## Reproducing
@@ -62,6 +78,7 @@ python3 scripts/build_site.py --figures      # regenerate every figure, then the
 python3 scripts/build_site.py                # rebuild the report and site only
 python3 scripts/tables.py                    # print the generated tables
 python3 scripts/build_compute_map.py         # rebuild the map dataset from all four sources
+python3 scripts/build_entity_atlas.py       # rebuild the entity atlas from the datasets
 python3 -m http.server -d docs 8901          # serve the report and the map
 ```
 

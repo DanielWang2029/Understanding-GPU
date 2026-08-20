@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entity Atlas — entities, relations and source recognition</title>
+<meta name="description" content="Entity-relation grid and source search over the repository's AI-compute datasets, showing how every source URL is resolved to entities.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305070d'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%234fc3ff'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2' fill='%23ffb648'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2' fill='%23b085ff'/%3E%3Crect x='18' y='18' width='8' height='8' rx='2' fill='%233fe0a0'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">
+    <a class="back-link" href="../compute-map/index.html" title="The geographic view of the same data">← Compute map</a>
+    <h1>Entity Atlas</h1>
+    <p id="brand-sub">entities · relations · source recognition</p>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="grid" class="on">Entity grid</button>
+    <button data-tab="search">Source search</button>
+  </nav>
+  <div class="topstats" id="topstats"></div>
+</header>
+
+<!-- ============================== GRID TAB ============================== -->
+<main id="tab-grid" class="tab on">
+  <aside id="grid-left">
+    <div class="pad">
+      <input id="grid-filter" type="search" placeholder="Filter entities…  ( / )" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="sec-title">Entity types</div>
+    <div id="legend" class="legend"></div>
+    <div class="pane-scroll" id="grid-side"></div>
+  </aside>
+
+  <section id="grid-stage">
+    <div id="grid-toolbar">
+      <span class="hint" id="grid-hint">Click an entity to light up its relations</span>
+      <span class="spacer"></span>
+      <label class="toggle"><input type="checkbox" id="toggle-curves" checked> Relation curves</label>
+      <label class="toggle"><input type="checkbox" id="toggle-comention"> Include co-citation links</label>
+      <button class="mini" id="btn-clear">Clear selection</button>
+    </div>
+    <div id="grid-scroll">
+      <svg id="wires" aria-hidden="true"></svg>
+      <div id="cards"></div>
+    </div>
+  </section>
+
+  <aside id="grid-right">
+    <div class="pane-scroll" id="entity-detail"></div>
+  </aside>
+</main>
+
+<!-- ============================= SEARCH TAB ============================= -->
+<main id="tab-search" class="tab">
+  <div id="search-wrap">
+    <div id="search-head">
+      <h2>Search the data sources</h2>
+      <p class="muted">Type an entity — a company, accelerator, data center, cloud region or country —
+        and add as many as you like. Every source whose recognised entities match is listed below,
+        and each one opens its own page.</p>
+
+      <div id="searchbox">
+        <div id="chips"></div>
+        <input id="q" type="text" placeholder="e.g. Anthropic, TPU v7, Colossus 2, Malaysia…"
+               autocomplete="off" spellcheck="false" aria-label="Search entities">
+        <button id="q-clear" title="Clear all">Clear</button>
+      </div>
+      <div id="suggest" role="listbox"></div>
+
+      <div id="search-controls">
+        <div class="seg" id="match-mode">
+          <button data-mode="any" class="on" title="Sources mentioning any selected entity">Any of</button>
+          <button data-mode="all" title="Sources mentioning every selected entity">All of</button>
+        </div>
+        <div class="seg" id="sort-mode">
+          <button data-sort="relevance" class="on">Relevance</button>
+          <button data-sort="date">Newest</button>
+          <button data-sort="publisher">Publisher</button>
+        </div>
+        <div id="kind-filters" class="chips-row"></div>
+      </div>
+    </div>
+
+    <div id="results-head"></div>
+    <div id="results"></div>
+    <div id="source-page"></div>
+  </div>
+</main>
+
+<div id="tooltip" role="tooltip"></div>
+
+<script src="data-loader.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
