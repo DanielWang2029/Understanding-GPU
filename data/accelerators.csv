@@ -6,7 +6,7 @@ H100 SXM5 80GB,H100,NVIDIA,Hopper,training+inference,2022-Q3,2022,TSMC 4N,80.0,1
 H100 PCIe 80GB,H100 PCIe,NVIDIA,Hopper,training+inference,2022-Q3,2022,TSMC 4N,80.0,1,80,HBM2e,2.00,50,756,1513,,26,350,600,2,24000,estimate,114 SMs vs 132 on SXM
 H200 SXM 141GB,H200,NVIDIA,Hopper,training+inference,2024-Q2,2024,TSMC 4N,80.0,1,141,HBM3e,4.80,50,989.5,1979,,34,700,900,8,35000,estimate,H100 compute with 1.76x memory and 1.43x bandwidth
 H20 (China SKU),H20,NVIDIA,Hopper,inference,2024-Q2,2024,TSMC 4N-class,,1,96,HBM3,4.00,60,148,148,,1,400,900,8,,unknown,Export-compliant: compute cut ~7x vs H100 but memory bandwidth higher
-GH200 Grace Hopper (HBM3e),GH200,NVIDIA,Hopper,training+inference,2024-Q1,2024,TSMC 4N,80.0,1,144,HBM3e,4.90,50,990,1979,,34,900,256,,unknown,900 GB/s coherent NVLink-C2C to 72-core Grace CPU + 480GB LPDDR5X
+GH200 Grace Hopper (HBM3e),GH200,NVIDIA,Hopper,training+inference,2024-Q1,2024,TSMC 4N,80.0,1,144,HBM3e,4.90,50,990,1979,,34,1000,900,256,,unknown,900 GB/s coherent NVLink-C2C to a 72-core Grace CPU with 480GB LPDDR5X; module TDP is 450-1000W programmable
 L40S,L40S,NVIDIA,Ada Lovelace,inference,2023-Q4,2023,TSMC 4N,76.3,1,48,GDDR6,0.864,96,362,733,,,350,64,1,8500,estimate,No HBM/NVLink/MIG; AV1 encode; universal inference+graphics card
 L4,L4,NVIDIA,Ada Lovelace,inference,2023-Q1,2023,TSMC 4N,,1,24,GDDR6,0.30,48,121,242,,,72,64,1,,unknown,72W single-slot; edge/video inference
 B100,B100,NVIDIA,Blackwell,training+inference,2024-Q4,2024,TSMC 4NP,208.0,2,192,HBM3e,8.00,126,1750,3500,7000,30,700,1800,8,32500,estimate,700W drop-in Hopper replacement; low volume

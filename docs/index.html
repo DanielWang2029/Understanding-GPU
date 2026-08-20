@@ -1,0 +1,3197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPUs and TPUs for LLM Training — A Technical and Commercial Field Guide</title>
+<meta name="description" content="How GPUs and TPUs work, what every current AI accelerator's specifications are, what they cost, and how they compare.">
+<style>
+:root {
+  --ink: #16202a; --muted: #5b6b7a; --line: #dde4ea; --panel: #f6f8fa;
+  --accent: #1a73e8; --nvidia: #76b900; --warn: #c5221f; --bg: #ffffff;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.68 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+#layout { display: flex; align-items: flex-start; max-width: 1600px; margin: 0 auto; }
+nav {
+  position: sticky; top: 0; flex: 0 0 296px; height: 100vh; overflow-y: auto;
+  padding: 30px 20px 60px 26px; border-right: 1px solid var(--line);
+  background: var(--panel); font-size: 13.5px;
+}
+nav .brand { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; margin-bottom: 4px; }
+nav .sub { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+nav a { display: block; color: var(--muted); text-decoration: none; padding: 4px 8px;
+        border-radius: 6px; border-left: 2px solid transparent; }
+nav a:hover { color: var(--accent); background: #fff; }
+nav a.h2 { color: var(--ink); font-weight: 600; margin-top: 10px; }
+nav a.h3 { padding-left: 20px; font-size: 12.8px; }
+main { flex: 1 1 auto; min-width: 0; padding: 46px 56px 120px; max-width: 1180px; }
+h1 { font-size: 33px; line-height: 1.22; letter-spacing: -0.022em; margin: 0 0 10px; }
+h2 { font-size: 25px; letter-spacing: -0.018em; margin: 56px 0 14px; padding-top: 14px;
+     border-top: 1px solid var(--line); }
+h3 { font-size: 18.5px; margin: 34px 0 10px; }
+h4 { font-size: 15.5px; margin: 24px 0 8px; color: var(--muted); text-transform: uppercase;
+     letter-spacing: 0.06em; }
+p { margin: 0 0 15px; }
+strong { font-weight: 650; }
+a { color: var(--accent); }
+hr { display: none; }
+code { background: var(--panel); border: 1px solid var(--line); border-radius: 5px;
+       padding: 1px 5px; font-size: 13.2px;
+       font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+pre { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+      padding: 16px 18px; overflow-x: auto; font-size: 13px; line-height: 1.55; }
+pre code { background: none; border: none; padding: 0; }
+blockquote { margin: 0 0 16px; padding: 2px 18px; border-left: 3px solid var(--accent);
+             color: var(--muted); }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+img { display: block; width: 100%; height: auto; margin: 26px 0 8px;
+      border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.figure-caption { color: var(--muted); font-size: 12.6px; margin: -2px 0 30px; }
+table { border-collapse: collapse; width: 100%; margin: 18px 0 26px; font-size: 13.4px;
+        display: block; overflow-x: auto; }
+th, td { border-bottom: 1px solid var(--line); padding: 8px 11px; text-align: left;
+         vertical-align: top; white-space: nowrap; }
+th { background: var(--panel); font-weight: 650; font-size: 12.6px; position: sticky; top: 0; }
+tbody tr:hover { background: #fafcfe; }
+td:first-child, th:first-child { white-space: normal; min-width: 150px; }
+.badge { display: inline-block; padding: 1px 7px; border-radius: 20px; font-size: 11.5px;
+         font-weight: 600; }
+footer { margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--line);
+         color: var(--muted); font-size: 13px; }
+@media (max-width: 1080px) {
+  nav { display: none; }
+  main { padding: 28px 20px 80px; }
+  h1 { font-size: 27px; }
+}
+</style>
+</head>
+<body>
+<div id="layout">
+<nav>
+  <div class="brand">GPUs &amp; TPUs for LLM Training</div>
+  <div class="sub">Technical and commercial field guide · 20 August 2026</div>
+  <a class="h2" href="#how-to-read-this-report">How to read this report</a>
+  <a class="h2" href="#the-short-version">The short version</a>
+  <a class="h2" href="#contents">Contents</a>
+  <a class="h2" href="#1-how-a-gpu-works">1. How a GPU works</a>
+  <a class="h3" href="#11-inside-an-sm">1.1 Inside an SM</a>
+  <a class="h3" href="#12-the-three-hopper-additions-that-made-fp8-transformer-training-work">1.2 The three Hopper additions that made FP8 transformer training work</a>
+  <a class="h3" href="#13-the-cache-hierarchy-is-the-point-of-difference">1.3 The cache hierarchy is the point of difference</a>
+  <a class="h3" href="#14-scaling-out-nvlink-nvswitch-and-the-8-gpu-wall">1.4 Scaling out: NVLink, NVSwitch and the 8-GPU wall</a>
+  <a class="h2" href="#2-how-a-tpu-works">2. How a TPU works</a>
+  <a class="h3" href="#21-the-systolic-array">2.1 The systolic array</a>
+  <a class="h3" href="#22-no-caches-anywhere">2.2 No caches, anywhere</a>
+  <a class="h3" href="#23-sparsecore-the-part-that-is-not-a-systolic-array">2.3 SparseCore: the part that is not a systolic array</a>
+  <a class="h3" href="#24-the-optically-reconfigurable-torus">2.4 The optically reconfigurable torus</a>
+  <a class="h3" href="#25-what-this-buys-in-one-number">2.5 What this buys, in one number</a>
+  <a class="h2" href="#3-the-differences-that-matter">3. The differences that matter</a>
+  <a class="h3" href="#31-who-decides-where-the-data-goes">3.1 Who decides where the data goes</a>
+  <a class="h3" href="#32-array-granularity">3.2 Array granularity</a>
+  <a class="h3" href="#33-the-scale-up-domain">3.3 The scale-up domain</a>
+  <a class="h3" href="#34-precision">3.4 Precision</a>
+  <a class="h3" href="#35-availability-and-lock-in">3.5 Availability and lock-in</a>
+  <a class="h3" href="#36-software">3.6 Software</a>
+  <a class="h2" href="#4-the-arithmetic-of-llm-training-on-real-hardware">4. The arithmetic of LLM training on real hardware</a>
+  <a class="h3" href="#41-the-6nd-rule">4.1 The 6ND rule</a>
+  <a class="h3" href="#42-memory-why-one-accelerator-is-never-enough">4.2 Memory: why one accelerator is never enough</a>
+  <a class="h3" href="#43-roofline-the-300-flopbyte-wall">4.3 Roofline: the ~300 FLOP/byte wall</a>
+  <a class="h3" href="#44-parallelism-and-why-the-fabric-decides-the-strategy">4.4 Parallelism, and why the fabric decides the strategy</a>
+  <a class="h3" href="#45-what-mfu-you-should-actually-expect">4.5 What MFU you should actually expect</a>
+  <a class="h3" href="#46-reliability-is-a-hardware-specification">4.6 Reliability is a hardware specification</a>
+  <a class="h2" href="#5-the-nvidia-lineup">5. The NVIDIA lineup</a>
+  <a class="h3" href="#51-datacenter-training-and-inference-parts">5.1 Datacenter training and inference parts</a>
+  <a class="h3" href="#52-inference-and-prosumer-parts">5.2 Inference and prosumer parts</a>
+  <a class="h3" href="#53-rack-scale-systems">5.3 Rack-scale systems</a>
+  <a class="h2" href="#6-amd-intel-and-huawei">6. AMD, Intel and Huawei</a>
+  <a class="h3" href="#61-amd-instinct">6.1 AMD Instinct</a>
+  <a class="h3" href="#62-intel">6.2 Intel</a>
+  <a class="h3" href="#63-huawei">6.3 Huawei</a>
+  <a class="h2" href="#7-google-tpu-generation-by-generation">7. Google TPU, generation by generation</a>
+  <a class="h3" href="#71-what-each-generation-was-actually-for">7.1 What each generation was actually for</a>
+  <a class="h3" href="#72-pricing-the-one-authoritative-accelerator-price-list-in-the-industry">7.2 Pricing — the one authoritative accelerator price list in the industry</a>
+  <a class="h3" href="#73-who-trains-on-tpus">7.3 Who trains on TPUs</a>
+  <a class="h2" href="#8-the-other-asics">8. The other ASICs</a>
+  <a class="h3" href="#81-aws-trainium-the-largest-non-nvidia-training-fleet">8.1 AWS Trainium — the largest non-NVIDIA training fleet</a>
+  <a class="h3" href="#82-meta-mtia-internal-only-and-the-most-candid-roadmap">8.2 Meta MTIA — internal-only, and the most candid roadmap</a>
+  <a class="h3" href="#83-microsoft-maia">8.3 Microsoft Maia</a>
+  <a class="h3" href="#84-cerebras-wafer-scale">8.4 Cerebras — wafer-scale</a>
+  <a class="h3" href="#85-groq-now-part-of-nvidia">8.5 Groq — now part of NVIDIA</a>
+  <a class="h3" href="#86-sambanova-and-tenstorrent">8.6 SambaNova and Tenstorrent</a>
+  <a class="h3" href="#87-what-the-field-looks-like-after-twelve-months-of-consolidation">8.7 What the field looks like after twelve months of consolidation</a>
+  <a class="h2" href="#9-head-to-head">9. Head to head</a>
+  <a class="h3" href="#91-everything-relative-to-one-h100">9.1 Everything relative to one H100</a>
+  <a class="h3" href="#92-efficiency">9.2 Efficiency</a>
+  <a class="h3" href="#93-what-the-audited-benchmarks-say">9.3 What the audited benchmarks say</a>
+  <a class="h3" href="#94-real-training-runs-for-calibration">9.4 Real training runs, for calibration</a>
+  <a class="h2" href="#10-supply-price-and-the-economics">10. Supply, price and the economics</a>
+  <a class="h3" href="#101-what-a-chip-costs-to-build">10.1 What a chip costs to build</a>
+  <a class="h3" href="#102-the-two-real-chokepoints">10.2 The two real chokepoints</a>
+  <a class="h3" href="#103-what-it-costs-to-rent">10.3 What it costs to rent</a>
+  <a class="h3" href="#104-normalised-what-you-get-per-dollar">10.4 Normalised: what you get per dollar</a>
+  <a class="h3" href="#105-total-cost-of-ownership">10.5 Total cost of ownership</a>
+  <a class="h3" href="#106-export-controls-as-of-august-2026">10.6 Export controls, as of August 2026</a>
+  <a class="h3" href="#107-the-money-confirmed">10.7 The money, confirmed</a>
+  <a class="h2" href="#11-choosing-hardware">11. Choosing hardware</a>
+  <a class="h3" href="#111-start-with-the-constraint-not-the-chip">11.1 Start with the constraint, not the chip</a>
+  <a class="h3" href="#112-a-rough-mapping">11.2 A rough mapping</a>
+  <a class="h3" href="#113-five-mistakes-this-report-exists-to-prevent">11.3 Five mistakes this report exists to prevent</a>
+  <a class="h3" href="#114-what-to-watch-next">11.4 What to watch next</a>
+  <a class="h2" href="#12-appendix-methodology-conflicts-and-unknowns">12. Appendix: methodology, conflicts and unknowns</a>
+  <a class="h3" href="#121-how-this-report-was-built">12.1 How this report was built</a>
+  <a class="h3" href="#122-conflicting-numbers-you-will-encounter">12.2 Conflicting numbers you will encounter</a>
+  <a class="h3" href="#123-things-nobody-has-published">12.3 Things nobody has published</a>
+  <a class="h3" href="#124-primary-sources">12.4 Primary sources</a>
+  <a class="h3" href="#125-correcting-this-report">12.5 Correcting this report</a>
+</nav>
+<main>
+<h1>GPUs and TPUs for LLM Training: A Technical and Commercial Field Guide</h1>
+<p><strong>Compiled 20 August 2026.</strong> This is a self-contained reference on the hardware that trains and serves large language models: how GPUs and TPUs work, why they are built differently, what every current accelerator's specifications actually are, what they cost, who can get them, and how they compare on compute, memory, interconnect, efficiency and price.</p>
+<p>Every figure in this document is generated by code in <code>scripts/</code> from the datasets in <code>data/</code>, so any number can be traced, re-plotted, or corrected.</p>
+<hr />
+<h2 id="how-to-read-this-report">How to read this report</h2>
+<p>Three conventions matter enough to state up front, because most published accelerator comparisons get them wrong.</p>
+<p><strong>1. Dense, not sparse.</strong> NVIDIA, AMD and Meta headline their tensor throughput <em>with 2:1 structured sparsity</em>, which is exactly 2× the dense rate and requires 2:4-pruned weights that production LLM training does not use. Every FLOPS number in this report is <strong>dense</strong> — vendor headline figures have been halved where the asterisk applies. The most honest public comment on this comes from Meta's own ISCA 2025 paper on MTIA: 2:4 sparsity shipped in the hardware, but "our production experience indicates that exploiting sparsity is challenging due to potential quality loss… this feature is not yet widely used in production." Read every "with sparsity" figure in the industry through that sentence.</p>
+<p><strong>2. Confidence is labelled.</strong> Accelerator economics is an evidence-poor field: NVIDIA, AMD and Google publish no list prices for datacenter parts, no supplier breaks out HBM revenue, and no lab publishes training compute any more. Claims here carry one of three tags.</p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>confirmed</strong></td>
+<td>Stated by the party in a position to know — vendor datasheet, SEC filing, earnings call, official price list, peer-reviewed paper, MLCommons result</td>
+</tr>
+<tr>
+<td><strong>estimate</strong></td>
+<td>Published by a named analyst, bank or trade publication, or derived arithmetically in this report from confirmed inputs</td>
+</tr>
+<tr>
+<td><strong>rumor</strong></td>
+<td>Single-source channel check or anonymously sourced report; included only where nothing better exists, and flagged</td>
+</tr>
+</tbody>
+</table>
+<p><strong>3. Peak FLOPS is an upper bound you will not reach.</strong> Well-tuned dense pretraining lands at 35–50% model FLOPs utilisation. Inference decode at batch 32 is structurally capped near 11% of an H100's peak, no matter how good the kernels are. Any comparison based on peak numbers overstates differences that real workloads compress, and hides differences — memory capacity, fabric bandwidth, software maturity — that real workloads amplify.</p>
+<hr />
+<h2 id="the-short-version">The short version</h2>
+<p>If you read nothing else, these are the load-bearing conclusions.</p>
+<p><strong>On architecture.</strong> A GPU is a general-purpose parallel machine that hides memory latency dynamically with warp switching and hardware caches. A TPU is a matrix machine whose data movement is placed statically by a compiler, with scratchpads instead of caches and no thread-level scheduling at all. The GPU pays silicon and timing variance for the ability to run any kernel; the TPU trades flexibility for MACs per watt and for near-deterministic step times, which is what makes 9,216-chip synchronous training practical. Every serious non-GPU design now shipping — TPU, Trainium, Maia 200, Groq, Cerebras, MTIA — has independently converged on software-managed on-chip memory.</p>
+<p><strong>On what actually changed recently.</strong> Not FLOPS. The scale-up domain: the number of chips inside one coherent, uniformly high-bandwidth pool went from 8 (HGX, a decade-long constraint) to 72 (GB200/GB300 NVL72, AMD Helios) to 9,216 (a TPU v7 superpod). That single number decides whether tensor parallelism and mixture-of-experts all-to-all are affordable, and it is why rack-scale systems, not chips, are now the unit of purchase.</p>
+<p><strong>On memory.</strong> LLM memory demand is growing faster than 1000% per year against HBM capacity growth under 50% per year. Model state alone is 16 bytes per parameter, so a 405B model needs 6.5 TB before a single activation — 81 H100s' worth. HBM is now the most expensive component on the package (~$2,900 of an estimated $6,400 B200 build cost, against ~$850 of logic silicon), and HBM4 pricing is why GPU rental prices <em>rose</em> about 40% between October 2025 and March 2026 even as packaging capacity expanded.</p>
+<p><strong>On the competitive picture.</strong> NVIDIA retains the strongest position, and the moat is breadth rather than any single benchmark: it was the only vendor submitting to all seven MLPerf Training v6.0 workloads. But the non-NVIDIA path is now demonstrably real at frontier scale, and it runs through vertically integrated hyperscaler silicon rather than through merchant competitors. Anthropic is the clearest revealed preference in the industry: roughly 500,000 Trainium2 chips at Project Rainier, up to one million TPUs contracted from October 2025, and multiple further gigawatts of TPU capacity from 2027 — a frontier lab running flagship models on two different non-NVIDIA platforms simultaneously. AMD has crossed from theoretically capable to shipping (Zyphra pretrained ZAYA1 on 1,024 MI300X), and its structural advantage is memory capacity per dollar, not compute.</p>
+<p><strong>On price.</strong> The provider tier moves the price more than the silicon generation does. An H100 costs 1.05 USD/hour on a marketplace and 12.29 USD/hour on Azure — a 12× spread for identical silicon, and 45× including spot. Google lists Ironwood at 12.00 USD per chip-hour while SemiAnalysis estimates Anthropic pays about 1.60. Any statement of the form "X is cheaper than Y" is a procurement claim, not a hardware claim.</p>
+<p><strong>On what is actually scarce.</strong> Not logic wafers. Advanced packaging (TSMC CoWoS, ~130k wafers/month in 2026 against roughly 1M wafers of annual demand), HBM stacks (all three suppliers sold out for 2026), and increasingly electricity and transformers. A GB200 NVL72 rack draws 132 kW and weighs 1.4 tonnes; a TPU v7 superpod draws nearly 10 MW.</p>
+<hr />
+<h2 id="contents">Contents</h2>
+<ol>
+<li><a href="#1-how-a-gpu-works">How a GPU works</a></li>
+<li><a href="#2-how-a-tpu-works">How a TPU works</a></li>
+<li><a href="#3-the-differences-that-matter">The differences that matter</a></li>
+<li><a href="#4-the-arithmetic-of-llm-training-on-real-hardware">The arithmetic of LLM training on real hardware</a></li>
+<li><a href="#5-the-nvidia-lineup">The NVIDIA lineup</a></li>
+<li><a href="#6-amd-intel-and-huawei">AMD, Intel and Huawei</a></li>
+<li><a href="#7-google-tpu-generation-by-generation">Google TPU, generation by generation</a></li>
+<li><a href="#8-the-other-asics">The other ASICs: Trainium, MTIA, Maia, Cerebras, Groq and friends</a></li>
+<li><a href="#9-head-to-head">Head to head</a></li>
+<li><a href="#10-supply-price-and-the-economics">Supply, price and the economics</a></li>
+<li><a href="#11-choosing-hardware">Choosing hardware</a></li>
+<li><a href="#12-appendix-methodology-conflicts-and-unknowns">Appendix: methodology, conflicts and unknowns</a></li>
+</ol>
+<hr />
+<h2 id="1-how-a-gpu-works">1. How a GPU works</h2>
+<p><img alt="GPU and TPU chip block diagrams side by side" src="figures/fig01_gpu_vs_tpu_block.png" /></p>
+<p>A datacenter GPU is a lattice of near-identical compute tiles wrapped in a memory system designed to keep them fed despite unpredictable access patterns. On an H100 there are 132 <strong>streaming multiprocessors</strong> (SMs); on a B200 there are 148 enabled across two dies; on Rubin, 224. Everything else — caches, schedulers, interconnect — exists to supply them.</p>
+<h3 id="11-inside-an-sm">1.1 Inside an SM</h3>
+<p>An SM is divided into four processing blocks, each with its own warp scheduler, dispatch unit, L0 instruction cache and slice of the register file. Per SM on Hopper: <strong>128 FP32 lanes, 64 INT32, 64 FP64, four fourth-generation Tensor Cores, a 256 KB register file, and 256 KB of combined L1/shared memory</strong> of which up to 228 KB can be configured as programmer-managed shared memory. (confirmed — Hopper whitepaper)</p>
+<p>The execution model has been stable since Volta and is worth stating precisely, because it explains both the GPU's flexibility and its inefficiency: <strong>32 threads per warp, up to 64 warps and 2,048 threads resident per SM, 32 thread blocks per SM, 65,536 32-bit registers per SM, 255 registers per thread.</strong> Volta added independent thread scheduling, giving each thread its own program counter so divergent branches can interleave rather than serialise.</p>
+<p>What changed generation to generation is not the model but the ratios and the units bolted on:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Volta V100</th>
+<th>Ampere A100</th>
+<th>Hopper H100</th>
+<th>Blackwell B200</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP32 lanes per SM</td>
+<td>64</td>
+<td>64</td>
+<td><strong>128</strong></td>
+<td>128</td>
+</tr>
+<tr>
+<td>Tensor Cores per SM</td>
+<td>8 (1st gen)</td>
+<td>4 (3rd gen)</td>
+<td>4 (4th gen)</td>
+<td>4 (5th gen)</td>
+</tr>
+<tr>
+<td>Register file per SM</td>
+<td>256 KB</td>
+<td>256 KB</td>
+<td>256 KB</td>
+<td>256 KB</td>
+</tr>
+<tr>
+<td>L1 + shared per SM</td>
+<td>128 KB</td>
+<td><strong>192 KB</strong></td>
+<td><strong>256 KB</strong></td>
+<td>256 KB</td>
+</tr>
+<tr>
+<td>Max shared memory</td>
+<td>96 KB</td>
+<td>164 KB</td>
+<td>228 KB</td>
+<td>not published</td>
+</tr>
+<tr>
+<td>L2 total</td>
+<td>6 MB</td>
+<td><strong>40 MB</strong></td>
+<td><strong>50 MB</strong></td>
+<td><strong>126 MB</strong> (measured)</td>
+</tr>
+<tr>
+<td>New numeric formats</td>
+<td>FP16 tensor</td>
+<td>TF32, BF16, 2:4 sparsity</td>
+<td><strong>FP8 (E4M3/E5M2)</strong></td>
+<td><strong>FP6, FP4, microscaling</strong></td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed for Volta through Hopper from NVIDIA whitepapers; B200 L2 and SM count are independent measurements by Chips and Cheese — NVIDIA has stopped publishing SM and cache counts for datacenter Blackwell)</p>
+<p>Note the ratio that got worse: registers per FP32 lane halved from 1,024 on A100 to 512 on H100, because the lanes doubled and the register file did not. This is one reason kernel authors moved from register-blocked GEMMs to shared-memory-and-TMA pipelines.</p>
+<h3 id="12-the-three-hopper-additions-that-made-fp8-transformer-training-work">1.2 The three Hopper additions that made FP8 transformer training work</h3>
+<p><strong>Tensor Memory Accelerator (TMA).</strong> A hardware unit that performs asynchronous multi-dimensional bulk copies between global and shared memory from a tensor descriptor. <strong>A single thread</strong> issues a copy of up to the full shared-memory capacity; the unit generates addresses and handles out-of-bounds behaviour while every other thread keeps computing. Synchronisation runs through shared-memory asynchronous transaction barriers rather than spinning. (confirmed)</p>
+<p>Rubin extends this with <strong>inline descriptor updates</strong>: a kernel keeps one descriptor for tensors sharing a layout and overrides the base pointer and stride inside the TMA instruction itself. That is a direct attack on MoE inference, where hundreds of expert weight matrices share a layout but live at different addresses. (confirmed — NVIDIA Rubin architecture blog)</p>
+<p><strong>Thread block clusters and distributed shared memory.</strong> Hopper inserted a level between grid and thread block. A cluster co-schedules up to 16 blocks on SMs within one GPC, and <strong>distributed shared memory</strong> makes their shared-memory windows mutually addressable, so an SM can load, store and perform atomics directly on a neighbour's shared memory instead of round-tripping through global memory. (confirmed)</p>
+<p><strong>The Transformer Engine.</strong> First generation (Hopper): FP8 in two flavours — E4M3 forward, E5M2 for gradients — with per-tensor dynamic scaling driven by a tracked history of absolute-maximum values. Second generation (Blackwell): FP6 and FP4, and a move from per-tensor to <strong>block (microscaling) formats</strong>. Third generation (Rubin): a 3-bit lookup-table weight format for the B matrix, plus activation sparsity applied inside attention, where the intermediate scores are 2:4-compressed on the way out of Tensor Memory so softmax and the second GEMM operate on non-zeros while the output stays dense. (confirmed)</p>
+<h3 id="13-the-cache-hierarchy-is-the-point-of-difference">1.3 The cache hierarchy is the point of difference</h3>
+<p>L2 went 6 MB (V100) → 40 MB (A100) → 50 MB (H100) → 126 MB (B200). On B200 the L2 is partitioned, almost certainly one partition per die, with about 150 ns latency to the local partition and a cross-die penalty only slightly worse than A100's cross-partition penalty. A single B200 L2 partition holds more than an H100's entire L2. (estimate — measured by Chips and Cheese)</p>
+<p>This is the architectural fork in the road. The GPU spends transistors on tags, coherence, replacement policy and residency controls so that <strong>any</strong> access pattern eventually performs acceptably. That is why a GPU runs a novel attention variant, a data-dependent MoE router, a graph neural network and a physics kernel with the same silicon. It is also why a GPU has more silicon per delivered MAC than a systolic machine, and why its step times vary.</p>
+<p><img alt="Memory hierarchies compared: caches, scratchpads, and SRAM-only" src="figures/fig04_memory_hierarchy.png" /></p>
+<h3 id="14-scaling-out-nvlink-nvswitch-and-the-8-gpu-wall">1.4 Scaling out: NVLink, NVSwitch and the 8-GPU wall</h3>
+<p>A GPU alone cannot hold a frontier model, so the interconnect is part of the architecture, not an accessory.</p>
+<table>
+<thead>
+<tr>
+<th>NVLink generation</th>
+<th>GPUs</th>
+<th>Per-GPU bidirectional bandwidth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NVLink 2</td>
+<td>V100</td>
+<td>300 GB/s (6 links)</td>
+</tr>
+<tr>
+<td>NVLink 3</td>
+<td>A100</td>
+<td>600 GB/s (12 links)</td>
+</tr>
+<tr>
+<td>NVLink 4</td>
+<td>H100, H200, GH200</td>
+<td>900 GB/s (18 links)</td>
+</tr>
+<tr>
+<td>NVLink 5</td>
+<td>B100, B200, B300</td>
+<td><strong>1,800 GB/s</strong> (18 × 100 GB/s)</td>
+</tr>
+<tr>
+<td>NVLink 6</td>
+<td>Rubin</td>
+<td><strong>3,600 GB/s</strong></td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed — NVIDIA datasheets and the GB200 NVL72 technical blog)</p>
+<p>Separately, <strong>NVLink-C2C</strong> connects a Grace CPU to its GPU coherently at 900 GB/s on GH200 (1.3 pJ/bit, over 5× more energy-efficient per bit than PCIe Gen5), rising to 1,800 GB/s on Vera Rubin. That is what lets a GPU issue loads and stores against 480 GB of CPU LPDDR5X as if it were a slower tier of its own memory.</p>
+<p>For a decade the practical consequence was the <strong>8-GPU wall</strong>: NVSwitch lived on the server baseboard, so the coherent domain was one node. Tensor parallelism, which all-reduces the full activation tensor four times per transformer layer, had to fit inside it. Above 8 GPUs you were on InfiniBand at roughly 50 GB/s per GPU — about 18× less bandwidth.</p>
+<p><strong>GB200 NVL72 moved the switches into the rack</strong> and broke that wall. 72 GPUs, 36 Grace CPUs, 18 compute trays, 9 switch trays holding 18 NVSwitch ASICs. Each GPU has exactly 18 NVLink 5 ports, one to each ASIC, over a copper backplane: fully connected, non-blocking, no topology-dependent hot spots, 130 TB/s of aggregate all-to-all bandwidth. The switch also does in-network reduction (SHARP), cutting both latency and bytes on the wire for all-reduce. (confirmed)</p>
+<p><img alt="Scale-up fabrics: HGX, NVL72 and a TPU torus" src="figures/fig05_topology.png" /></p>
+<p>NVIDIA quantifies the payoff bluntly: "every 2× of scale-up in NVLink bandwidth can lead to 1.3–1.4× of rack-level AI performance improvement." Vera Rubin NVL72 keeps 72 packages and doubles the fabric to 260 TB/s.</p>
+<p>Scale-out has moved in parallel: Quantum-X800 InfiniBand at 800 Gb/s per port with 144-port switches (115.2 Tb/s), the first use of 200 Gb/s-per-lane SerDes, SHARPv4 with 14.4 TFLOPS of in-network compute, and co-packaged-optics variants that cut insertion loss from about 22 dB to 4 dB. Notably, the fastest MLPerf v6.0 result at 8,192 GPUs ran on <strong>Spectrum-X Ethernet</strong>, not InfiniBand — evidence that Ethernet is now viable at frontier scale. (confirmed)</p>
+<hr />
+<h2 id="2-how-a-tpu-works">2. How a TPU works</h2>
+<p>A TPU starts from the observation that transformer training is overwhelmingly matrix multiplication, and asks what you would build if you were allowed to give up generality.</p>
+<h3 id="21-the-systolic-array">2.1 The systolic array</h3>
+<p>A systolic array is a two-dimensional grid of multiply-accumulate cells wired directly to their neighbours. Google's own description: "TPUs contain thousands of multiply-accumulators that are directly connected to each other to form a large physical matrix." Operands enter at the edges and <em>pulse</em> through — each cell takes values from its neighbours, multiplies, accumulates, and passes results onward. Nothing returns to a register file or cache in between.</p>
+<p><img alt="Weight-stationary systolic dataflow over four cycles" src="figures/fig02_systolic_array.png" /></p>
+<p>The reason this fits matmul is an arithmetic-intensity argument. In an N×N array, an operand entering the edge is reused N times as it propagates, so <strong>arithmetic scales with N² (the cell count) while traffic across the array boundary scales with N</strong>. A 256×256 Ironwood MXU performs <strong>16,384 MACs per cycle</strong> from one instruction. A conventional machine needs an operand fetch and a result writeback per MAC; the systolic array replaces that O(N²) register traffic with O(N) edge traffic plus nearest-neighbour wires, and short local wires are dramatically cheaper in energy than SRAM accesses.</p>
+<p>Google TPUs are fundamentally <strong>weight-stationary</strong>: a tile of the weight matrix stays resident while activations stream through. TPU v4 explicitly improved "faster MXU weight loading bandwidth" to cut the changeover cost, and Ironwood exposes the pipeline to the programmer — VMEM is split between the current computation scope and the <em>next</em> weight prefetch, tuned with <code>xla_tpu_scoped_vmem_limit_kib</code>. (confirmed)</p>
+<p>The array width is not free. Google states that Ironwood's MXU "is efficient when the contracting dimension is larger than or equal to a multiple of 256." The move from 128×128 (v2 through v5p) to 256×256 (v6e, v7) raised peak FLOPS and simultaneously raised the granularity you must hit to achieve them — Google notes flash-attention kernels suffer "more underutilization of the MXU" as a result. A matmul with a contracting dimension of 128 wastes half the array.</p>
+<h3 id="22-no-caches-anywhere">2.2 No caches, anywhere</h3>
+<p>There is no cache hierarchy on a TPU. Every level of on-chip memory is a software-managed scratchpad with an explicit address space, and XLA decides statically what lives where and when it moves. No prefetcher, no eviction policy, no coherence protocol, no cache tags.</p>
+<table>
+<thead>
+<tr>
+<th>Scratchpad</th>
+<th>Role</th>
+<th>Sizes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>VMEM</strong></td>
+<td>High-bandwidth staging for MXU/VPU; the tile buffer for custom kernels</td>
+<td>v3: 32 MiB · v4: 16 MiB per TensorCore (32/chip) · <strong>v7: 64 MiB per TensorCore (128/chip)</strong> · TPU 8i: 384 MB</td>
+</tr>
+<tr>
+<td><strong>CMEM</strong></td>
+<td>Chip-level scratchpad shared by both TensorCores, load/store access. New in v4</td>
+<td>v4: <strong>128 MiB</strong></td>
+</tr>
+<tr>
+<td><strong>SMEM / Spmem</strong></td>
+<td>Per-SparseCore-tile buffer for embedding vectors</td>
+<td>v3: 5 MiB · v4: 10 MiB (2.5 MiB per tile slice)</td>
+</tr>
+<tr>
+<td>Register file</td>
+<td></td>
+<td>0.25 MiB, unchanged v3 → v4</td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed — Jouppi et al. ISCA 2023; Google Cloud Ironwood performance docs)</p>
+<p>CMEM was measurably load-bearing rather than decorative. The v4 paper reports RNN1 — small weights, small batches — running <strong>3.3× faster on v4 than v3</strong>, well above the typical 1.5–2.0×, and attributes it specifically to "CMEM bandwidth versus HBM." The v4i paper decomposes its performance-per-watt gain as roughly 1.5× from CMEM, 1.3× from the 16nm→7nm move, and 1.2× from everything else.</p>
+<p><strong>Why determinism is the real product.</strong> Because the compiler knows when every byte arrives, XLA can statically schedule collectives to overlap maximally with compute. Google's Gemini technical report describes exactly this: the GSPMD partitioner partitions the step, and "the MegaScale XLA compiler pass statically schedules appropriate collectives so that they maximally overlap with the computation <strong>with very little variation in step time</strong>." At 4,096-chip synchronous scale the slowest chip sets the pace, so removing variance is worth more than raising the mean.</p>
+<p><img alt="Dynamic latency hiding versus static scheduling" src="figures/fig03_execution_model.png" /></p>
+<p>The cost is that everything becomes the compiler's problem. Shapes must be static or padded to static buckets. A kernel whose working set overflows VMEM does not degrade gracefully; it gets a different, worse schedule. And when performance is bad you are debugging XLA's choices, which are far less legible than a GPU profiler trace.</p>
+<h3 id="23-sparsecore-the-part-that-is-not-a-systolic-array">2.3 SparseCore: the part that is not a systolic array</h3>
+<p>Embedding lookups — irregular, data-dependent gather/scatter — are what a systolic array is worst at. Rather than compromise the MXU, Google added a separate dataflow processor on the same die.</p>
+<p>The economics are remarkable, and Google states them plainly: SparseCores "speed up models that rely on embeddings by <strong>5×–7× yet use only 5% of die area and power</strong>." Each SparseCore tile has a Fetch Unit pulling activations and parameters from HBM into its 2.5 MiB Spmem slice, an scVPU reusing the TensorCore's ALUs, a Flush Unit writing updated parameters back on the backward pass, and five Cross-Channel Units executing embedding primitives across all 16 banks. These units run <strong>CISC-like instructions on variable-length inputs where each instruction's runtime is data-dependent</strong> — deliberately the opposite of the MXU's deterministic pipeline, isolated on its own core so the irregularity cannot infect the main datapath. (confirmed — ISCA 2023)</p>
+<p>SparseCores also give the pod a flat, globally addressable memory space — <strong>128 TiB on TPU v4</strong> — which is how an embedding table larger than any chip's HBM gets sharded across a pod and accessed over ICI.</p>
+<p>In Ironwood, SparseCore acquired a second job: <strong>collective offloading</strong>. The SparseCores are now "independent threads of control capable of managing data movement over the ICI fabric," so All-Gather and Reduce-Scatter run in parallel with TensorCore compute. Google calls it "the recommended method for asynchronous collectives on TPU7x." (confirmed)</p>
+<h3 id="24-the-optically-reconfigurable-torus">2.4 The optically reconfigurable torus</h3>
+<p>From v4 onward a pod is not hard-wired. Chips are grouped into <strong>4×4×4 cubes of 64 chips</strong> on passive copper, and the cubes are joined through <strong>optical circuit switches</strong> — mechanically steered mirror arrays that make a physical-layer optical circuit between fibre ports. Four consequences follow, and all four are load-bearing.</p>
+<p><strong>Topology on demand.</strong> Gemini's technical report gives the timescale: v4 superpods of 4,096 chips are "each connected to a dedicated optical switch, which can dynamically reconfigure 4×4×4 chip cubes into arbitrary 3D torus topologies in around 10 seconds." A 512-chip slice can be 4×4×32, 4×8×16 or 8×8×8 depending on which parallelism dimensions your model wants, and Google's docs advise matching them.</p>
+<p><strong>Twisted tori.</strong> Because links are switch-mediated, wrap-around edges can shift by X+2 mod 4 instead of connecting same-coordinate chips, converting an asymmetric torus into a symmetric one. Published bisection-bandwidth gains: about <strong>70% for 4×4×8, 8×8×16 and 12×12×24</strong>, about 40% for 4×8×8 and 8×16×16. Measured effect on FSDP MaxText was 1–2 percentage points of MFU. (confirmed)</p>
+<p><strong>Fault tolerance and scheduling availability.</strong> Google calls this ICI resiliency: connections route around OCS and optical faults, which "improves the scheduling availability of TPU slices, with the trade-off of temporary degradation in ICI performance," and it is on by default for slices of one cube or larger. The v4 paper's argument is that with hosts at 99.0–99.9% availability, "in practice it is much easier to schedule a 3K slice than a 4K" one. Gemini Ultra exploited this explicitly: "we decided to retain a small number of cubes per superpod to allow for hot standbys and rolling maintenance."</p>
+<p><strong>Pod-scale memory sharing.</strong> Ironwood's Hot Chips deck frames OCS as a memory technology: 9,216 chips "use optical circuit switches to share memory… directly addressable shared HBM memory capacity of <strong>1.77 PB</strong>."</p>
+<h3 id="25-what-this-buys-in-one-number">2.5 What this buys, in one number</h3>
+<p>A TPU v7 chip delivers 2,307 dense BF16 TFLOP/s and 4,614 FP8 TFLOP/s with 192 GiB of HBM3E at 7.38 TB/s, and a 9,216-chip superpod reaches 42.5 FP8 exaFLOPS inside about 10 MW. Google claims 2× the performance per watt of Trillium and roughly 30× that of its 2018 Cloud TPU. (confirmed for specs; the perf/W comparisons are vendor claims with no independent benchmark)</p>
+<p><img alt="Ten years of TPU: compute, memory and pod size" src="figures/fig24_tpu_generations.png" /></p>
+<hr />
+<h2 id="3-the-differences-that-matter">3. The differences that matter</h2>
+<p>Six differences do real work. The rest is marketing.</p>
+<h3 id="31-who-decides-where-the-data-goes">3.1 Who decides where the data goes</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>GPU</th>
+<th>TPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>On-chip memory</td>
+<td>Hardware caches (L1/L2) with residency hints</td>
+<td>Software scratchpads (VMEM, CMEM, SMEM)</td>
+</tr>
+<tr>
+<td>Latency hiding</td>
+<td>Dynamic: swap warps on a miss</td>
+<td>Static: compiler-placed DMA pipeline</td>
+</tr>
+<tr>
+<td>Instruction model</td>
+<td>SIMT, 32-thread warps, up to 2,048 threads/SM</td>
+<td>"Single Instruction 2D Data", 1 thread per core</td>
+</tr>
+<tr>
+<td>Step-time variance</td>
+<td>Meaningful — caches, clocks, scheduler</td>
+<td>Very small by construction</td>
+</tr>
+<tr>
+<td>Irregular workloads</td>
+<td>Runs them, at some efficiency</td>
+<td>Needs a separate unit (SparseCore) or fails</td>
+</tr>
+<tr>
+<td>Who you debug</td>
+<td>Your kernel, with a profiler</td>
+<td>The compiler's schedule, with less visibility</td>
+</tr>
+</tbody>
+</table>
+<p>This single distinction explains most downstream differences, including why TPUs achieve better MACs per watt and why porting an exotic research kernel to a TPU is harder than porting it to AMD.</p>
+<h3 id="32-array-granularity">3.2 Array granularity</h3>
+<p>A GPU Tensor Core instruction operates on a small tile (order 16×8×16) and is re-issued thousands of times by warps, with register reads, scheduling and dispatch amortised over relatively few MACs. A TPU MXU is one 256×256 physical fabric issuing 16,384 MACs per cycle from one instruction. The GPU wins on any matmul that does not fill 256 lanes in the contracting dimension; the TPU wins on the large regular GEMMs that dominate transformer training.</p>
+<h3 id="33-the-scale-up-domain">3.3 The scale-up domain</h3>
+<p><img alt="Scale-up domain size and per-chip fabric bandwidth" src="figures/fig12_scaleup_evolution.png" /></p>
+<p>This is the number that changed most, and it is the one most often left out of chip-versus-chip comparisons.</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Chips in one coherent domain</th>
+<th>Per-chip fabric</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HGX H100 / H200</td>
+<td>8</td>
+<td>900 GB/s NVLink 4</td>
+</tr>
+<tr>
+<td>HGX B200</td>
+<td>8</td>
+<td>1.8 TB/s NVLink 5</td>
+</tr>
+<tr>
+<td>GB200 / GB300 NVL72</td>
+<td><strong>72</strong></td>
+<td>1.8 TB/s NVLink 5</td>
+</tr>
+<tr>
+<td>Vera Rubin NVL72</td>
+<td>72</td>
+<td><strong>3.6 TB/s NVLink 6</strong></td>
+</tr>
+<tr>
+<td>AMD Helios (MI455X)</td>
+<td><strong>72</strong></td>
+<td>3.6 TB/s UALink-over-Ethernet</td>
+</tr>
+<tr>
+<td>Trainium3 Gen2 UltraServer</td>
+<td>144</td>
+<td>2.0 TB/s NeuronLink v4</td>
+</tr>
+<tr>
+<td>Huawei CloudMatrix 384</td>
+<td>384</td>
+<td>350 GB/s Unified Bus</td>
+</tr>
+<tr>
+<td>Microsoft Maia 200</td>
+<td>6,144</td>
+<td>2.8 TB/s Ethernet + custom transport</td>
+</tr>
+<tr>
+<td>TPU v7 Ironwood pod</td>
+<td><strong>9,216</strong></td>
+<td>1.2 TB/s ICI (3D torus + OCS)</td>
+</tr>
+<tr>
+<td>TPU 8t pod</td>
+<td>9,600</td>
+<td>not published</td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed from vendor documentation; see <code>data/accelerators.csv</code>)</p>
+<p>Google's advantage here is structural and hard to copy: <strong>nobody else has a reconfigurable topology.</strong> OCS gives topology matching, twisted tori, fault isolation and scheduling flexibility that fixed copper cannot. NVIDIA's answer is raw bandwidth and a flat non-blocking 72-GPU domain; AMD's is the same domain size over open standards; Microsoft, Intel and AMD have all independently chosen Ethernet for scale-up specifically to avoid proprietary lock-in.</p>
+<p>Note also what the eighth-generation TPU split tells you about workload divergence. TPU 8t keeps a 3D torus at 9,600 chips because neighbour traffic dominates dense pretraining. TPU 8i abandons it for a high-radix "Boardfly" fabric because all-to-all dominates MoE and reasoning, and Google published the arithmetic: an 8×8×16 torus of 1,024 chips has a 16-hop diameter, where Boardfly reaches the same 1,024 chips in <strong>7 hops</strong>. (confirmed)</p>
+<h3 id="34-precision">3.4 Precision</h3>
+<p>Both families are converging on the same formats, and the interesting differences are in the metadata rather than the element width.</p>
+<p><img alt="Number formats and block scaling" src="figures/fig08_precision.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>GPU support</th>
+<th>TPU support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BF16</td>
+<td>Ampere onward</td>
+<td>v2 onward (native MXU input, FP32 accumulate)</td>
+</tr>
+<tr>
+<td>FP8</td>
+<td>Hopper onward (Transformer Engine)</td>
+<td>v5p onward</td>
+</tr>
+<tr>
+<td>FP6 / FP4</td>
+<td>Blackwell onward (MXFP, NVFP4)</td>
+<td><strong>TPU 8t/8i: native FP4 in the MXU</strong></td>
+</tr>
+<tr>
+<td>INT8</td>
+<td>all generations</td>
+<td>v1 onward; v4 at full rate</td>
+</tr>
+<tr>
+<td>3-bit LUT weights</td>
+<td>Rubin</td>
+<td>not announced</td>
+</tr>
+</tbody>
+</table>
+<p>The measured result that should govern any FP4 planning: with an identical recipe on a 12B model, <strong>NVFP4 held about 1.5% relative loss error against BF16 where OCP MXFP4 reached about 2.5%, and MXFP4 needed 36% more tokens (1.36T vs 1.0T) to match NVFP4's loss.</strong> A 36% token penalty is most of what 4-bit was supposed to buy. The cause is exactly the metadata: 16-element blocks with an E4M3 scale plus a per-tensor FP32 scale preserve more local dynamic range than 32-element blocks with a power-of-two E8M0 scale. (confirmed — NVIDIA, arXiv:2509.25149)</p>
+<h3 id="35-availability-and-lock-in">3.5 Availability and lock-in</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>GPU (NVIDIA/AMD)</th>
+<th>TPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Can you buy the silicon?</td>
+<td>Yes, from many OEMs</td>
+<td><strong>No</strong></td>
+</tr>
+<tr>
+<td>Where can you rent it?</td>
+<td>Every hyperscaler, dozens of neoclouds, marketplaces</td>
+<td>Google Cloud only</td>
+</tr>
+<tr>
+<td>Price discovery</td>
+<td>Real, and volatile (45× spread on H100)</td>
+<td>Google's list price, or a negotiated contract</td>
+</tr>
+<tr>
+<td>Exit cost if prices rise</td>
+<td>Move providers</td>
+<td>Renegotiate, or port the model</td>
+</tr>
+<tr>
+<td>On-prem</td>
+<td>Normal</td>
+<td>Google Distributed Cloud only</td>
+</tr>
+</tbody>
+</table>
+<p>This is not a footnote. SemiAnalysis's TPU-versus-GPU total-cost model concludes Google's internal TCO per Ironwood chip is roughly 44% below a GB200 server, and that an external GCP customer sees roughly 30–41% lower cost per hour than GB200/GB300. But that first number is a cost-of-goods figure computed by the only company that both designs the chip and runs the datacenter. You are not that company. You rent at a price Google sets, and unlike a GPU you cannot buy the silicon and run it elsewhere. The actionable question is not "is a TPU cheaper than a GPU" but "is this GCP commitment cheaper than my GPU alternative" — a procurement negotiation, not a benchmark. (estimate)</p>
+<p>One striking data point on the negotiating value of the <em>threat</em>: SemiAnalysis reports that "OpenAI hasn't even deployed TPUs yet and they've already saved ~30% on their entire lab-wide NVIDIA fleet." (estimate)</p>
+<h3 id="36-software">3.6 Software</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>GPU</th>
+<th>TPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kernel authoring</td>
+<td>CUDA C++, CUTLASS/CuTe, Triton, hand-written PTX</td>
+<td>Pallas (Python DSL); otherwise you rely on XLA</td>
+</tr>
+<tr>
+<td>Distribution</td>
+<td>Explicit: NCCL calls, Megatron/DeepSpeed/FSDP configuration</td>
+<td>Declarative: annotate arrays, GSPMD inserts collectives</td>
+</tr>
+<tr>
+<td>Numerics library</td>
+<td>TransformerEngine ships with the silicon</td>
+<td>XLA built-in</td>
+</tr>
+<tr>
+<td>Reference training stack</td>
+<td>Megatron-LM / NeMo</td>
+<td>MaxText (JAX)</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>Multi-controller, one process per device</td>
+<td>Pathways single-controller across pods</td>
+</tr>
+<tr>
+<td>New research techniques</td>
+<td>Land here first, usually by months</td>
+<td>Follow</td>
+</tr>
+<tr>
+<td>Failure mode</td>
+<td>A slow kernel you can profile</td>
+<td>A recompilation or a schedule you cannot see</td>
+</tr>
+</tbody>
+</table>
+<p>The honest summary of the CUDA moat in 2026: it has narrowed to the frontier. For a well-trodden dense or MoE transformer, alternatives work — Gemini is trained entirely on TPUs, Zyphra pretrained ZAYA1 on 1,024 MI300X with ROCm 6.4 and RCCL over AMD Pollara Ethernet, and AMD's MI355X posted 10.18 minutes on MLPerf Llama 2 70B LoRA against NVIDIA's 11.145-minute GB200 result from the prior round. What CUDA still owns is <em>breadth</em>: NVIDIA was the only vendor to submit across all seven MLPerf Training v6.0 workloads, and every new numeric format arrives with day-one library support. Triton is the most important counterweight, because kernels written in Triton compile to AMD backends and increasingly to others, so the share of the ecosystem that is hard-locked to CUDA keeps shrinking.</p>
+<hr />
+<h2 id="4-the-arithmetic-of-llm-training-on-real-hardware">4. The arithmetic of LLM training on real hardware</h2>
+<p>This section is the bridge between the specifications and the invoices. Every constant here is checkable, and the worked examples reconcile against published runs.</p>
+<h3 id="41-the-6nd-rule">4.1 The 6ND rule</h3>
+<p>Training FLOPs ≈ <strong>6 × parameters × tokens</strong>. The forward pass costs 2 FLOPs per parameter per token (one multiply, one add); the backward pass costs twice that, because each layer computes both a weight gradient and an input gradient. Kaplan et al. (2020) drop the attention-score term <code>2·n_layer·n_ctx·d_attn</code>, which was two orders of magnitude smaller for the models of that era — and is <em>not</em> negligible at 128k context, which is precisely why Meta's measured throughput fell from 400 to 380 TFLOP/s per GPU during Llama 3.1's long-context stage.</p>
+<p><img alt="Training compute of real models, and the 6ND rule checked against it" src="figures/fig18_training_compute.png" /></p>
+<p><strong>Chinchilla-optimal allocation</strong> is about 20 tokens per parameter. Substituting D = 20N into C = 6ND gives C = 120N², so N_opt = √(C/120). Chinchilla itself: 70B parameters on 1.4T tokens beat the 280B Gopher at equal compute. (confirmed — Hoffmann et al. 2022)</p>
+<p>Nobody trains at the Chinchilla point any more, because inference cost scales with N and is paid forever. Llama 3.1 405B used about 38 tokens per parameter; Llama 3.1 8B used roughly 1,875, about 90× "over-trained."</p>
+<p><strong>Worked check on Llama 3.1 405B.</strong> 6 × 405e9 × 15.6e12 = <strong>3.79e25 FLOP</strong> against Meta's stated 3.8e25. Now against GPU-hours: 30.84M H100-hours × 3,600 s × 989.5e12 dense BF16 FLOP/s = 1.10e26 FLOP of peak capacity, so <strong>end-to-end utilisation was 34.6%</strong> while Meta reports 38–43% instantaneous MFU. The ~16% gap is restarts, evaluation, checkpoint stalls and the lower-MFU long-context stage. That reconciliation is the most honest single picture of what a frontier training run looks like. (estimate, from confirmed inputs)</p>
+<p><strong>Worked check on DeepSeek-V3.</strong> Using activated parameters: 6 × 37e9 × 14.8e12 = 3.29e24. DeepSeek's own hardware paper states 250 GFLOPS per token, giving 3.70e24 — the gap is MLA attention and routing that 6ND omits. Against 2.664M H800-hours the run used about 39% of BF16 peak, but its GEMMs ran in FP8, so <strong>19.5% of FP8 peak</strong>. The famous $5.576M figure is therefore evidence of a very sparse model on cheap-per-hour silicon, not of unusual hardware efficiency — and DeepSeek says explicitly it excludes "prior research and ablation experiments." (confirmed inputs, derived ratios)</p>
+<h3 id="42-memory-why-one-accelerator-is-never-enough">4.2 Memory: why one accelerator is never enough</h3>
+<p>Mixed-precision Adam costs <strong>16 bytes per parameter</strong>: 2 (BF16 weights) + 2 (BF16 gradients) + 4 (FP32 master weights) + 4 (Adam m) + 4 (Adam v).</p>
+<p><img alt="Model state, KV cache and how many accelerators they require" src="figures/fig21_memory_math.png" /></p>
+<p>ZeRO/FSDP shards those three categories across the data-parallel degree:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What is sharded</th>
+<th>Per-GPU bytes</th>
+<th>7.5B model, 64-way</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DDP baseline</td>
+<td>nothing</td>
+<td>16Ψ</td>
+<td>120 GB</td>
+</tr>
+<tr>
+<td>ZeRO-1</td>
+<td>optimizer states</td>
+<td>4Ψ + 12Ψ/N</td>
+<td>31.4 GB</td>
+</tr>
+<tr>
+<td>ZeRO-2</td>
+<td>+ gradients</td>
+<td>2Ψ + 14Ψ/N</td>
+<td>16.6 GB</td>
+</tr>
+<tr>
+<td>ZeRO-3 / FSDP</td>
+<td>+ parameters</td>
+<td>16Ψ/N</td>
+<td>1.9 GB</td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed — ZeRO, arXiv:1910.02054)</p>
+<p><strong>Activation memory</strong> per transformer layer without recomputation is <code>s·b·h·(34 + 5·a·s/h)</code> bytes in BF16. The <code>5as/h</code> term is the attention score matrix, quadratic in sequence length — exactly the term FlashAttention removes from HBM.</p>
+<p><strong>KV cache per token</strong> = <code>2 × n_layer × n_kv_heads × d_head × bytes</code>. Verifying against Llama 3.1 405B (126 layers, 8 GQA KV heads, head dim 128, BF16): 2 × 126 × 8 × 128 × 2 = <strong>516,096 bytes = 516 KB per token</strong>, matching DeepSeek's published table exactly. At that rate a single 128k-token context needs <strong>66 GB</strong> — most of an H100 — for one sequence. DeepSeek's MLA gets the same job done in 70.3 KB per token, 7.3× less.</p>
+<p>The structural problem, as DeepSeek frames it citing the AI-memory-wall literature: <strong>LLM memory demand grows more than 1000% per year while HBM capacity grows less than 50% per year.</strong></p>
+<h3 id="43-roofline-the-300-flopbyte-wall">4.3 Roofline: the ~300 FLOP/byte wall</h3>
+<p>Arithmetic intensity is FLOPs per byte moved from HBM. A kernel is compute-bound above the machine's ridge point (peak ÷ bandwidth).</p>
+<p><img alt="Roofline for H100, B200, TPU v7 and MI355X" src="figures/fig07_roofline.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Dense BF16 peak</th>
+<th>HBM bandwidth</th>
+<th>Ridge point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H100 SXM</td>
+<td>989.5 TFLOP/s</td>
+<td>3.35 TB/s</td>
+<td><strong>295 FLOP/byte</strong></td>
+</tr>
+<tr>
+<td>B200 (in GB200)</td>
+<td>~2,500 TFLOP/s</td>
+<td>8.0 TB/s</td>
+<td><strong>~312</strong></td>
+</tr>
+<tr>
+<td>TPU v7 Ironwood</td>
+<td>2,307 TFLOP/s</td>
+<td>7.38 TB/s</td>
+<td><strong>~313</strong></td>
+</tr>
+<tr>
+<td>MI355X</td>
+<td>2,517 TFLOP/s</td>
+<td>8.0 TB/s</td>
+<td><strong>~315</strong></td>
+</tr>
+<tr>
+<td>TPU v6e Trillium</td>
+<td>918 TFLOP/s</td>
+<td>1.638 TB/s</td>
+<td>561</td>
+</tr>
+</tbody>
+</table>
+<p>The convergence around 300 across four unrelated architectures is not coincidence — it reflects the shared economics of HBM stacks against logic area. Practical consequences:</p>
+<ul>
+<li>A square BF16 GEMM has intensity n/3, so <strong>n ≳ 900</strong> to clear the ridge. Tiny GEMMs — small batch, heavily sharded tensor-parallel slices — waste the machine.</li>
+<li><strong>Prefill</strong> at 8k context has intensity ~8,192: firmly compute-bound.</li>
+<li><strong>Decode</strong> has intensity ≈ batch size. To clear 295 on an H100 you need a batch near 300. Below that you pay full HBM traffic for the entire weight matrix to produce one token per sequence. This is why inference economics are a batching and KV-cache problem, and why "decode MFU" of 8–12% at batch 32 is not bad engineering but a roofline ceiling.</li>
+<li><strong>FP8 does not move the crossover.</strong> It halves the bytes and doubles the peak, so the ridge point doubles too. FP8 raises throughput, it does not make decode compute-bound.</li>
+</ul>
+<p><strong>FlashAttention</strong> is the single most important software change to this picture: it tiles attention so the S×S score matrix never leaves SRAM, cutting HBM accesses by a factor of roughly SRAM-size ÷ head-dim². FlashAttention-3 reaches 740–840 TFLOP/s on an H100 (75–85% of dense BF16 peak) versus about 35% for FA-2, and its FP8 variant hits 1.2–1.3 PFLOP/s with 2.6× lower numerical error than baseline per-tensor FP8 attention. (confirmed)</p>
+<h3 id="44-parallelism-and-why-the-fabric-decides-the-strategy">4.4 Parallelism, and why the fabric decides the strategy</h3>
+<p><img alt="Which parallelism can live on which wire" src="figures/fig06_parallelism.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Axis</th>
+<th>What is split</th>
+<th>Communication per step</th>
+<th>Where it can live</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data parallel / FSDP</td>
+<td>batch (+ state)</td>
+<td>one gradient all-reduce; ring moves 2(N−1)/N × bytes</td>
+<td>scale-out, even WAN</td>
+</tr>
+<tr>
+<td>Tensor parallel</td>
+<td>individual weight matrices</td>
+<td><strong>4 all-reduces of the full activation per layer</strong></td>
+<td>scale-up only</td>
+</tr>
+<tr>
+<td>Expert parallel</td>
+<td>MoE experts</td>
+<td>all-to-all token routing per MoE layer</td>
+<td>scale-up, spilling out</td>
+</tr>
+<tr>
+<td>Pipeline parallel</td>
+<td>layers</td>
+<td>point-to-point at stage boundaries; bubble = (P−1)/(V·M)</td>
+<td>scale-out</td>
+</tr>
+<tr>
+<td>Context/sequence parallel</td>
+<td>sequence</td>
+<td>ring or all-gather of K,V</td>
+<td>scale-up preferred</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Worked example — why TP must stay inside NVLink.</strong> Llama 3.1 405B's real configuration: h = 16,384, s = 8,192, microbatch 1, BF16, TP = 8. The activation tensor is 8,192 × 16,384 × 2 = 268 MB. Ring all-reduce puts 2×7/8 × 268 MB = 470 MB on the wire per GPU, four times per layer, so <strong>1.88 GB per GPU per layer per microbatch</strong>. That layer's compute at Meta's measured 400 TFLOP/s takes about 49.5 ms per GPU.</p>
+<table>
+<thead>
+<tr>
+<th>Fabric</th>
+<th>Per-GPU unidirectional</th>
+<th>Communication time</th>
+<th>As % of compute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NVLink 4 (H100)</td>
+<td>450 GB/s</td>
+<td>4.2 ms</td>
+<td><strong>8.5%</strong></td>
+</tr>
+<tr>
+<td>NVLink 5 (GB200 NVL72)</td>
+<td>900 GB/s</td>
+<td>2.1 ms</td>
+<td><strong>4.2%</strong></td>
+</tr>
+<tr>
+<td>InfiniBand NDR 400G</td>
+<td>50 GB/s</td>
+<td>37.6 ms</td>
+<td><strong>76%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>(estimate, derived from confirmed specs)</p>
+<p>That last row is the entire argument for rack-scale systems. It is also why DeepSeek capped each token's routing to at most 4 nodes — a model-architecture decision made backwards from the ~3.2:1 ratio between intra-node NVLink and inter-node InfiniBand bandwidth.</p>
+<p><strong>Meta's published parallelism table</strong> is the best public ground truth on how the axes compose:</p>
+<table>
+<thead>
+<tr>
+<th>GPUs</th>
+<th>TP</th>
+<th>CP</th>
+<th>PP</th>
+<th>DP</th>
+<th>Seq len</th>
+<th>TFLOP/s per GPU</th>
+<th>BF16 MFU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8,192</td>
+<td>8</td>
+<td>1</td>
+<td>16</td>
+<td>64</td>
+<td>8,192</td>
+<td>430</td>
+<td><strong>43%</strong></td>
+</tr>
+<tr>
+<td>16,384</td>
+<td>8</td>
+<td>1</td>
+<td>16</td>
+<td>128</td>
+<td>8,192</td>
+<td>400</td>
+<td><strong>41%</strong></td>
+</tr>
+<tr>
+<td>16,384</td>
+<td>8</td>
+<td>16</td>
+<td>16</td>
+<td>8</td>
+<td>131,072</td>
+<td>380</td>
+<td><strong>38%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed — Llama 3 paper, Table 4)</p>
+<p>Read the pattern: TP is pinned at 8 (the NVLink domain), PP at 16 (cheap over RoCE), and doubling the GPU count halves the per-replica batch, which shrinks the GEMMs and costs 2 points of MFU. Extending context to 128k consumes 16-way context parallelism taken out of data parallelism and costs 3 more.</p>
+<p><strong>What NVL72 changes.</strong> Megatron Core's TP-communication overlap "requires all devices to be on the same NVLink fabric, which on NVIDIA Hopper systems mean a maximum of 8 GPU servers can be utilized for a single parallelism group. NVIDIA GB200 NVL72 alleviates this limitation." TP can exceed 8, which shrinks pipeline depth and the bubble; MoE all-to-all can be confined to one rack; and in NVL72 there is no intra-tray GPU-to-GPU shortcut at all — all 72 GPUs are equidistant, so the placement heuristics developed for 8-GPU nodes stop applying. (confirmed)</p>
+<h3 id="45-what-mfu-you-should-actually-expect">4.5 What MFU you should actually expect</h3>
+<table>
+<thead>
+<tr>
+<th>Regime</th>
+<th>Typical MFU (dense peak denominator)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dense transformer pretraining, BF16, well tuned</td>
+<td>40–55%</td>
+</tr>
+<tr>
+<td>MoE pretraining</td>
+<td>25–40% (routing fragments compute; load imbalance)</td>
+</tr>
+<tr>
+<td>Fine-tuning with adequate batch</td>
+<td>35–50%</td>
+</tr>
+<tr>
+<td>Inference prefill</td>
+<td>30–50%</td>
+</tr>
+<tr>
+<td><strong>Inference decode, batch 32</strong></td>
+<td><strong>8–12% — and that is well-optimised</strong></td>
+</tr>
+<tr>
+<td>Naive eager PyTorch, no fusion</td>
+<td>3–8%</td>
+</tr>
+</tbody>
+</table>
+<p>Published first-party figures: Meta 38–43% (Llama 3.1 405B), Google 46.2% (PaLM), NVIDIA Megatron-LM up to 47%, Databricks over 50% on 64 H100s. (confirmed)</p>
+<p>One trap worth naming: <strong>FP8 runs report lower MFU while being faster</strong>, because the FP8 peak is 2× the BF16 peak. Databricks measured a 1.4–1.5× throughput gain from FP8 alongside a <em>lower</em> MFU percentage. Any MFU comparison without a stated, common, dense denominator is meaningless.</p>
+<h3 id="46-reliability-is-a-hardware-specification">4.6 Reliability is a hardware specification</h3>
+<p><img alt="Llama 3 failure breakdown, job MTBF versus scale, and checkpoint waste" src="figures/fig20_reliability.png" /></p>
+<p>Meta's published failure log for Llama 3.1 405B on 16,384 H100s over 54 days is the best public dataset in existence on what breaks at scale: <strong>466 interruptions, 47 planned and 419 unexpected, of which about 78% were hardware and 58.7% were GPU-specific</strong> — 148 faulty GPUs, 72 HBM3 failures, 19 SRAM, 17 GPU system processors, 6 silent data corruptions. Software bugs were third at 12.9%. Only <strong>3 of 419</strong> events needed significant human intervention, and Meta still achieved over 90% effective training time. (confirmed — Llama 3 paper, Table 5)</p>
+<p>Derived consequences (estimate, assuming Meta's per-GPU rate holds):</p>
+<ul>
+<li>Per-GPU MTBF ≈ 2,112 GPU-days ≈ 5.8 GPU-years counting all causes.</li>
+<li>Job MTBF = per-GPU MTBF ÷ N: <strong>3.1 hours at 16,384 GPUs, about 30 minutes at 100,000, about 3 minutes at a million.</strong></li>
+<li>Young/Daly optimum: waste ≈ √(2δ/M). On a 100k-GPU job, a 60-second synchronous checkpoint wastes <strong>26% of the cluster</strong>; 5-second peer/in-memory replication wastes 7%.</li>
+</ul>
+<p>That arithmetic is why checkpointing engineering outranks kernel micro-optimisation at scale. Meta's Tectonic storage fabric — 240 PB across 7,500 SSD servers, 2 TB/s sustained — exists to absorb "highly bursty checkpoint writes." Google's answer for Gemini was different and more radical: <strong>redundant in-memory copies of model state instead of periodic checkpointing to storage, lifting goodput from 85% to 97%.</strong> Google also notes that at Gemini scale silent data corruption "impact[s] training every week or two."</p>
+<p>Two further failure modes worth knowing. First, hardware failures at this scale often present as <strong>hangs, not errors</strong>: Meta notes that NVLink load/store failures "often manifest as stalled load/store operations within CUDA kernels without returning a clear error code," which is why the NCCL flight recorder exists. Second, synchronous training makes the whole cluster one coherent electrical load — tens of thousands of GPUs pausing together for a checkpoint produce "instant fluctuations of power consumption across the data center on the order of tens of megawatts, stretching the limits of the power grid."</p>
+<p>TPUs attack the same problem at the topology layer: a failed cube is optically bypassed and a spare swapped in, so the job resumes on a <em>logically identical</em> mesh — which matters enormously in a compiler-first stack where the mesh shape is baked into the compiled program.</p>
+<hr />
+<h2 id="5-the-nvidia-lineup">5. The NVIDIA lineup</h2>
+<p><img alt="Per-chip throughput 2017-2026" src="figures/fig09_compute_timeline.png" /></p>
+<h3 id="51-datacenter-training-and-inference-parts">5.1 Datacenter training and inference parts</h3>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Launch</th>
+<th>Process</th>
+<th>Memory</th>
+<th>BW (TB/s)</th>
+<th>BF16 dense</th>
+<th>FP8 dense</th>
+<th>FP4 dense</th>
+<th>TDP</th>
+<th>Scale-up</th>
+<th>Domain</th>
+<th>Unit price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tesla V100 SXM2 32GB</strong></td>
+<td>2018-Q2</td>
+<td>TSMC 12FFN</td>
+<td>32 GB HBM2</td>
+<td>0.90</td>
+<td>125 TF</td>
+<td>—</td>
+<td>—</td>
+<td>300 W</td>
+<td>300 GB/s</td>
+<td>8</td>
+<td>eol</td>
+</tr>
+<tr>
+<td><strong>A100 SXM4 40GB</strong></td>
+<td>2020-Q2</td>
+<td>TSMC N7</td>
+<td>40 GB HBM2</td>
+<td>1.55</td>
+<td>312 TF</td>
+<td>—</td>
+<td>—</td>
+<td>400 W</td>
+<td>600 GB/s</td>
+<td>8</td>
+<td>$12,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>A100 SXM4 80GB</strong></td>
+<td>2020-Q4</td>
+<td>TSMC N7</td>
+<td>80 GB HBM2e</td>
+<td>2.04</td>
+<td>312 TF</td>
+<td>—</td>
+<td>—</td>
+<td>400 W</td>
+<td>600 GB/s</td>
+<td>8</td>
+<td>$12,500 (estimate)</td>
+</tr>
+<tr>
+<td><strong>H100 SXM5 80GB</strong></td>
+<td>2022-Q3</td>
+<td>TSMC 4N</td>
+<td>80 GB HBM3</td>
+<td>3.35</td>
+<td>990 TF</td>
+<td>1,979 TF</td>
+<td>—</td>
+<td>700 W</td>
+<td>900 GB/s</td>
+<td>8</td>
+<td>$30,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>H100 PCIe 80GB</strong></td>
+<td>2022-Q3</td>
+<td>TSMC 4N</td>
+<td>80 GB HBM2e</td>
+<td>2.00</td>
+<td>756 TF</td>
+<td>1,513 TF</td>
+<td>—</td>
+<td>350 W</td>
+<td>600 GB/s</td>
+<td>2</td>
+<td>$24,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>H200 SXM 141GB</strong></td>
+<td>2024-Q2</td>
+<td>TSMC 4N</td>
+<td>141 GB HBM3e</td>
+<td>4.80</td>
+<td>990 TF</td>
+<td>1,979 TF</td>
+<td>—</td>
+<td>700 W</td>
+<td>900 GB/s</td>
+<td>8</td>
+<td>$35,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>H20 (China SKU)</strong></td>
+<td>2024-Q2</td>
+<td>TSMC 4N-class</td>
+<td>96 GB HBM3</td>
+<td>4.00</td>
+<td>148 TF</td>
+<td>148 TF</td>
+<td>—</td>
+<td>400 W</td>
+<td>900 GB/s</td>
+<td>8</td>
+<td>unknown</td>
+</tr>
+<tr>
+<td><strong>GH200 Grace Hopper (HBM3e)</strong></td>
+<td>2024-Q1</td>
+<td>TSMC 4N</td>
+<td>144 GB HBM3e</td>
+<td>4.90</td>
+<td>990 TF</td>
+<td>1,979 TF</td>
+<td>—</td>
+<td>1,000 W</td>
+<td>900 GB/s</td>
+<td>256</td>
+<td>unknown</td>
+</tr>
+<tr>
+<td><strong>B100</strong></td>
+<td>2024-Q4</td>
+<td>TSMC 4NP</td>
+<td>192 GB HBM3e</td>
+<td>8.00</td>
+<td>1,750 TF</td>
+<td>3,500 TF</td>
+<td>7,000 TF</td>
+<td>700 W</td>
+<td>1,800 GB/s</td>
+<td>8</td>
+<td>$32,500 (estimate)</td>
+</tr>
+<tr>
+<td><strong>B200 (HGX)</strong></td>
+<td>2025-Q1</td>
+<td>TSMC 4NP</td>
+<td>180 GB HBM3e</td>
+<td>7.70</td>
+<td>2,250 TF</td>
+<td>4,500 TF</td>
+<td>9,000 TF</td>
+<td>1,000 W</td>
+<td>1,800 GB/s</td>
+<td>8</td>
+<td>$42,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>B200 (in GB200 NVL72)</strong></td>
+<td>2025-Q1</td>
+<td>TSMC 4NP</td>
+<td>186 GB HBM3e</td>
+<td>8.00</td>
+<td>2,500 TF</td>
+<td>5,000 TF</td>
+<td>10,000 TF</td>
+<td>1,200 W</td>
+<td>1,800 GB/s</td>
+<td>72</td>
+<td>$45,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>B300 (in GB300 NVL72)</strong></td>
+<td>2025-H2</td>
+<td>TSMC 4NP</td>
+<td>279 GB HBM3e</td>
+<td>8.00</td>
+<td>2,500 TF</td>
+<td>5,000 TF</td>
+<td>15,000 TF</td>
+<td>1,400 W</td>
+<td>1,800 GB/s</td>
+<td>72</td>
+<td>$51,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>Rubin R100 (Vera Rubin NVL72)</strong></td>
+<td>2026-Q3</td>
+<td>TSMC N3 (reported)</td>
+<td>288 GB HBM4</td>
+<td>22.00</td>
+<td>4,000 TF</td>
+<td>17,500 TF</td>
+<td>35,000 TF</td>
+<td>—</td>
+<td>3,600 GB/s</td>
+<td>72</td>
+<td>unknown</td>
+</tr>
+</tbody>
+</table>
+<p>Notes on individual parts, in the order they matter.</p>
+<p><strong>V100 (2017–18).</strong> The chip that made deep learning a datacenter category: first-generation Tensor Cores, 125 dense FP16 TFLOP/s, no BF16 path, no sparsity, no MIG. GPT-3 was trained on V100s. It is included here as the baseline against which everything else is a multiple.</p>
+<p><strong>A100 (2020).</strong> The generation that set the modern template: TF32 and BF16 tensor cores, 2:4 structured sparsity, MIG partitioning, 40 MB of L2 (nearly 7× V100), and NVLink 3 at 600 GB/s. Still widely rented at 0.68–2.70 USD/hour and still the cheapest way to get 80 GB of HBM.</p>
+<p><strong>H100 (2022).</strong> The workhorse of the LLM era, and the part every comparison is calibrated against. 989.5 dense BF16 TFLOP/s, 1,979 dense FP8, 80 GB HBM3 at 3.35 TB/s, 900 GB/s NVLink, 700 W. Its real contribution was the first-generation Transformer Engine plus TMA and thread-block clusters, which together made FP8 transformer training practical.</p>
+<p><strong>H200 (2024).</strong> Identical compute to H100 with 141 GB of HBM3e at 4.8 TB/s. NVIDIA measured up to 47% faster than H100 on its MLPerf debut — pure memory-bound uplift, and a clean demonstration that on inference-heavy work the memory system is the product.</p>
+<p><strong>H20 (2024).</strong> The export-compliant China SKU, and the most instructive artefact of the policy environment: compute cut roughly 7× below H100 (148 dense BF16 TFLOP/s) while <em>memory</em> went up to 96 GB at 4.0 TB/s. Bandwidth-bound decode barely notices; training does. NVIDIA publishes no datasheet, so every H20 figure here is secondary. NVIDIA took a <strong>$4.5B charge</strong> in Q1 FY26 when H20 licensing was imposed. (confirmed)</p>
+<p><strong>GH200 (2023–24).</strong> A 72-core Grace CPU and an H100 on one module, joined by 900 GB/s coherent NVLink-C2C, with up to 480 GB of CPU LPDDR5X the GPU can address directly. 624 GB of total fast memory per module. The architectural point outlived the product: coherent CPU-GPU memory is now standard on GB200, GB300 and Vera Rubin.</p>
+<p><strong>B200 and GB200 NVL72 (2024–25).</strong> NVIDIA's first chiplet datacenter GPU: two reticle-limited dies joined by a 10 TB/s NV-HBI link and presented to software as one GPU, 208B transistors, 126 MB of partitioned L2. Second-generation Transformer Engine with FP6, FP4 and microscaling. The important number is not the 2,500 dense BF16 TFLOP/s but the <strong>72-GPU NVLink domain</strong> with 130 TB/s of all-to-all bandwidth in a 132 kW rack.</p>
+<p><strong>B300 / GB300 NVL72 (H2 2025).</strong> Blackwell Ultra: 1.5× FP4 (15,000 dense TFLOP/s), 279 GB of 12-Hi HBM3e, PCIe Gen6, 800 Gb/s ConnectX-8 per GPU, up to 1,400 W. Two deliberate regressions tell you what NVIDIA thinks the market is: <strong>FP64 cut 30× (40 → 1.3 TFLOP/s)</strong> and INT8 cut roughly 30×. Traditional double-precision HPC gets nothing from this part. In MLPerf v6.0 it delivered up to 1.6× GB200 at equal GPU count.</p>
+<p><strong>Rubin / Vera Rubin NVL72 (2026).</strong> In full production as of 31 May 2026, shipping to OpenAI, CoreWeave, Google Cloud, Azure, Meta and Dell. 336B transistors, 224 SMs, 896 Tensor Cores, <strong>288 GB of HBM4 at 22 TB/s</strong> (2.8× Blackwell), NVLink 6 at 3.6 TB/s per GPU, 260 TB/s per rack, 88 custom Olympus Arm cores in the Vera CPU. Third-generation Transformer Engine adds 3-bit LUT weights, activation sparsity in attention, 2×/4× faster softmax, and tile-level dependent kernel launch. NVIDIA has not published Rubin's TDP or price. Two naming traps: the shipping product is <strong>NVL72</strong> (72 packages), not the "NVL144" die-count label; and the NVFP4 pair "50 PFLOPS inference / 35 PFLOPS training" is not a clean 2× relationship, so do not assume the usual dense/sparse mapping.</p>
+<p><strong>Rubin CPX: cancelled.</strong> Announced September 2025 as a GDDR7 prefill accelerator, absent from GTC 2026, and explicitly removed from the roadmap. NVIDIA VP Ian Buck: "It's still a good idea, but in order to dedicate our focus on optimizing the decode with LPU this year, we'll be thinking about CPX more in the next generation." Its replacement is the <strong>Groq 3 LPU in NVIDIA LPX racks</strong> — 256 SRAM-only chips per rack paired with an adjacent Vera Rubin NVL72, the first product of NVIDIA's $20B Groq licensing deal. Any circulating "NVL144 CPX" figures describe a product that does not exist. (confirmed)</p>
+<h3 id="52-inference-and-prosumer-parts">5.2 Inference and prosumer parts</h3>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Launch</th>
+<th>Process</th>
+<th>Memory</th>
+<th>BW (TB/s)</th>
+<th>BF16 dense</th>
+<th>FP8 dense</th>
+<th>FP4 dense</th>
+<th>TDP</th>
+<th>Scale-up</th>
+<th>Domain</th>
+<th>Unit price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L40S</strong></td>
+<td>2023-Q4</td>
+<td>TSMC 4N</td>
+<td>48 GB GDDR6</td>
+<td>0.86</td>
+<td>362 TF</td>
+<td>733 TF</td>
+<td>—</td>
+<td>350 W</td>
+<td>64 GB/s</td>
+<td>1</td>
+<td>$8,500 (estimate)</td>
+</tr>
+<tr>
+<td><strong>L4</strong></td>
+<td>2023-Q1</td>
+<td>TSMC 4N</td>
+<td>24 GB GDDR6</td>
+<td>0.30</td>
+<td>121 TF</td>
+<td>242 TF</td>
+<td>—</td>
+<td>72 W</td>
+<td>64 GB/s</td>
+<td>1</td>
+<td>unknown</td>
+</tr>
+<tr>
+<td><strong>GeForce RTX 4090</strong></td>
+<td>2022-Q4</td>
+<td>TSMC 4N</td>
+<td>24 GB GDDR6X</td>
+<td>1.01</td>
+<td>165 TF</td>
+<td>661 TF</td>
+<td>—</td>
+<td>450 W</td>
+<td>64 GB/s</td>
+<td>1</td>
+<td>$1,599 (list)</td>
+</tr>
+<tr>
+<td><strong>GeForce RTX 5090</strong></td>
+<td>2025-Q1</td>
+<td>TSMC 4N</td>
+<td>32 GB GDDR7</td>
+<td>1.79</td>
+<td>210 TF</td>
+<td>838 TF</td>
+<td>1,676 TF</td>
+<td>575 W</td>
+<td>128 GB/s</td>
+<td>1</td>
+<td>$1,999 (list)</td>
+</tr>
+</tbody>
+</table>
+<p>The L40S and L4 matter because they show what NVIDIA builds when HBM is not on the menu: GDDR6, no NVLink, no MIG, strong video engines, and 72 W in the L4's case. The RTX 5090 is the interesting one for individuals — 32 GB of GDDR7 at 1.79 TB/s and native FP4 for $1,999 — but with no NVLink it cannot participate in tensor parallelism, which caps it at single-GPU work. The RTX PRO 6000 Blackwell (96 GB GDDR7, MIG, confidential computing) launched at $8,565 and was listed at $13,250 by August 2026, a 55% increase NVIDIA attributes to the GDDR7 shortage. (confirmed)</p>
+<h3 id="53-rack-scale-systems">5.3 Rack-scale systems</h3>
+<p><img alt="Rack and pod scale systems compared" src="figures/fig13_rack_systems.png" /></p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Chips</th>
+<th>BF16 PFLOP/s</th>
+<th>FP8 PFLOP/s</th>
+<th>FP4 PFLOP/s</th>
+<th>HBM</th>
+<th>HBM BW</th>
+<th>Scale-up BW</th>
+<th>Power</th>
+<th>Price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HGX H100 (8-GPU)</strong></td>
+<td>8</td>
+<td>7.9</td>
+<td>15.8</td>
+<td>—</td>
+<td>0.6 TB</td>
+<td>27 TB/s</td>
+<td>7 TB/s</td>
+<td>10 kW</td>
+<td>$285,000</td>
+</tr>
+<tr>
+<td><strong>HGX B200 (8-GPU)</strong></td>
+<td>8</td>
+<td>18.0</td>
+<td>36.0</td>
+<td>72.0</td>
+<td>1.4 TB</td>
+<td>62 TB/s</td>
+<td>14 TB/s</td>
+<td>15 kW</td>
+<td>$390,000</td>
+</tr>
+<tr>
+<td><strong>GB200 NVL72</strong></td>
+<td>72</td>
+<td>180.0</td>
+<td>360.0</td>
+<td>720.0</td>
+<td>13.4 TB</td>
+<td>576 TB/s</td>
+<td>130 TB/s</td>
+<td>132 kW</td>
+<td>$3,100,000</td>
+</tr>
+<tr>
+<td><strong>GB300 NVL72</strong></td>
+<td>72</td>
+<td>180.0</td>
+<td>360.0</td>
+<td>1,080.0</td>
+<td>20.0 TB</td>
+<td>576 TB/s</td>
+<td>130 TB/s</td>
+<td>140 kW</td>
+<td>$3,700,000</td>
+</tr>
+<tr>
+<td><strong>Vera Rubin NVL72</strong></td>
+<td>72</td>
+<td>288.0</td>
+<td>1,260.0</td>
+<td>2,520.0</td>
+<td>20.7 TB</td>
+<td>1,580 TB/s</td>
+<td>260 TB/s</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>AMD Helios (MI455X)</strong></td>
+<td>72</td>
+<td>362.0</td>
+<td>1,400.0</td>
+<td>2,900.0</td>
+<td>31.0 TB</td>
+<td>1,700 TB/s</td>
+<td>260 TB/s</td>
+<td>130 kW</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>TPU v7 Ironwood pod</strong></td>
+<td>9,216</td>
+<td>21,300.0</td>
+<td>42,500.0</td>
+<td>—</td>
+<td>1,770.0 TB</td>
+<td>68,000 TB/s</td>
+<td>—</td>
+<td>10,000 kW</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>TPU 8t pod</strong></td>
+<td>9,600</td>
+<td>—</td>
+<td>—</td>
+<td>121,000.0</td>
+<td>2,074.0 TB</td>
+<td>62,700 TB/s</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Trainium3 Gen2 UltraServer</strong></td>
+<td>144</td>
+<td>96.6</td>
+<td>362.4</td>
+<td>362.4</td>
+<td>20.7 TB</td>
+<td>706 TB/s</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Huawei CloudMatrix 384</strong></td>
+<td>384</td>
+<td>300.0</td>
+<td>—</td>
+<td>—</td>
+<td>49.2 TB</td>
+<td>—</td>
+<td>—</td>
+<td>559 kW</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Cerebras CS-4 (3 wafers)</strong></td>
+<td>3</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>0.1 TB</td>
+<td>129,600 TB/s</td>
+<td>—</td>
+<td>130 kW</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>NVIDIA LPX (Groq 3)</strong></td>
+<td>256</td>
+<td>—</td>
+<td>315.0</td>
+<td>—</td>
+<td>0.1 TB</td>
+<td>40,000 TB/s</td>
+<td>640 TB/s</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Read this table with the chip counts in view: a TPU v7 superpod is 9,216 chips, roughly 128 NVL72 racks' worth, so its totals are not a like-for-like comparison with a single rack. What <em>is</em> comparable is the per-rack progression — GB200 → GB300 → Vera Rubin roughly triples FP4 throughput and quadruples fabric bandwidth in about eighteen months — and the fact that AMD's Helios matches NVIDIA's 72-chip domain while carrying 50% more HBM.</p>
+<hr />
+<h2 id="6-amd-intel-and-huawei">6. AMD, Intel and Huawei</h2>
+<h3 id="61-amd-instinct">6.1 AMD Instinct</h3>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Launch</th>
+<th>Process</th>
+<th>Memory</th>
+<th>BW (TB/s)</th>
+<th>BF16 dense</th>
+<th>FP8 dense</th>
+<th>FP4 dense</th>
+<th>TDP</th>
+<th>Scale-up</th>
+<th>Domain</th>
+<th>Unit price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Instinct MI250X</strong></td>
+<td>2021-Q4</td>
+<td>TSMC N6</td>
+<td>128 GB HBM2e</td>
+<td>3.20</td>
+<td>383 TF</td>
+<td>—</td>
+<td>—</td>
+<td>560 W</td>
+<td>—</td>
+<td>8</td>
+<td>unknown</td>
+</tr>
+<tr>
+<td><strong>Instinct MI300X</strong></td>
+<td>2023-Q4</td>
+<td>TSMC N5/N6</td>
+<td>192 GB HBM3</td>
+<td>5.30</td>
+<td>1,307 TF</td>
+<td>2,615 TF</td>
+<td>—</td>
+<td>750 W</td>
+<td>896 GB/s</td>
+<td>8</td>
+<td>$16,500 (estimate)</td>
+</tr>
+<tr>
+<td><strong>Instinct MI325X</strong></td>
+<td>2024-Q4</td>
+<td>TSMC N5/N6</td>
+<td>256 GB HBM3e</td>
+<td>6.00</td>
+<td>1,307 TF</td>
+<td>2,615 TF</td>
+<td>—</td>
+<td>1,000 W</td>
+<td>896 GB/s</td>
+<td>8</td>
+<td>$20,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>Instinct MI355X</strong></td>
+<td>2025-Q2</td>
+<td>TSMC N3/N6</td>
+<td>288 GB HBM3e</td>
+<td>8.00</td>
+<td>2,517 TF</td>
+<td>5,033 TF</td>
+<td>10,066 TF</td>
+<td>1,400 W</td>
+<td>1,075 GB/s</td>
+<td>8</td>
+<td>$25,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>Instinct MI455X (Helios)</strong></td>
+<td>2026-Q3</td>
+<td>2nm-class (reported)</td>
+<td>432 GB HBM4</td>
+<td>23.30</td>
+<td>5,033 TF</td>
+<td>19,400 TF</td>
+<td>40,260 TF</td>
+<td>—</td>
+<td>3,611 GB/s</td>
+<td>72</td>
+<td>unknown</td>
+</tr>
+</tbody>
+</table>
+<p>AMD's strategy is legible from the table: <strong>compete on memory, match on low precision, and give away nothing on openness.</strong> MI300X shipped 192 GB when H100 had 80; MI355X shipped 288 GB at 8 TB/s in the same window as B200's 180–192 GB; MI455X ships 432 GB of HBM4 against Rubin's 288 GB. AMD's own Helios claim against Vera Rubin NVL72 is 15% more peak FP4, <strong>50% more HBM capacity</strong>, 6% more HBM bandwidth and 50% more scale-out bandwidth. The capacity claim is the structurally defensible one.</p>
+<p>Three things to know beyond the specifications.</p>
+<p><strong>MI300X and MI325X have identical compute.</strong> MI325X is purely a memory upgrade (192 → 256 GB, 5.3 → 6.0 TB/s) bought with 250 W. Same pattern as H100 → H200.</p>
+<p><strong>CDNA 4 deprioritised FP64</strong> just as Blackwell Ultra did: 163.4 → 78.6 TFLOP/s. The HPC-and-AI dual-purpose era is over on both sides.</p>
+<p><strong>Helios is an open-standards rack.</strong> 72 MI455X in an OCP Open Rack Wide, 18 EPYC Venice CPUs, 31 TB of HBM4, 260 TB/s of scale-up over <strong>UALink-over-Ethernet</strong> with single-hop all-to-all, 43 TB/s of scale-out over Ultra Ethernet, in production and shipping late Q3 2026. AMD's bet is that open fabrics plus more memory beat a mature proprietary stack for inference-dominated workloads, where kernel diversity is lower than in research training.</p>
+<p><strong>The MI455X bandwidth number is genuinely disputed.</strong> AMD's newsroom says 1.7 PB/s per Helios rack (23.3 TB/s per GPU, which matches a physical derivation from 12 HBM4 stacks × 2,048-bit at ~7.6 GT/s); Supermicro's datasheet says 1.4 PB/s (19.6 TB/s). Both sets are internally self-consistent, so this is two specifications rather than a typo — likely a peak-theoretical versus conservative-binned figure. AMD also labels none of the MI455X throughput figures dense or sparse while benchmarking them against NVIDIA's dense NVFP4. (estimate; flagged)</p>
+<p><strong>Where ROCm actually stands in 2026.</strong> Solved: upstream PyTorch works out of the box, vLLM and SGLang treat Instinct as first-class, Hugging Face models load, and Triton has a real AMD backend — which matters more than it sounds, because it gives a portable path for a large fraction of the ecosystem's hand-written kernels. Still friction: custom CUDA kernels need porting, RCCL multi-node collective tuning is much less well-trodden than NCCL's, new techniques (novel attention variants, quantisation schemes, MoE kernels) land on CUDA first by months, and profiling and debugging tooling is thinner.</p>
+<p>The evidence that training on AMD is now real rather than theoretical:</p>
+<ul>
+<li><strong>Zyphra's ZAYA1</strong>, the first large-scale MoE foundation model pretrained end-to-end on AMD hardware, networking and software: 128 nodes × 8 MI300X = <strong>1,024 GPUs</strong>, 8× Pensando Pollara 400 Gbps NICs per node, over 750 aggregate BF16 PFLOP/s measured, ROCm 6.4, Apache 2.0 weights. Critically, MI300X's 192 GB let Zyphra pretrain "primarily using a simpler parallelism strategy, namely data-parallelism with the ZeRO-1 distributed optimizer," avoiding expert and tensor sharding entirely. That is the underrated argument for high-capacity HBM: it buys <em>simplicity</em>, and every parallelism axis you avoid is a class of bugs you do not debug. The paper also contributes the first published RCCL-over-Pollara collective microbenchmarks at that scale. (confirmed)</li>
+<li><strong>MLPerf Training v5.1</strong>, audited, 8-GPU FP8 Llama 2 70B LoRA:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Round</th>
+<th>Benchmark</th>
+<th>Platform</th>
+<th>Accelerators</th>
+<th>Time to train</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v5.1</td>
+<td>Llama 2 70B LoRA</td>
+<td>MI355X</td>
+<td>8</td>
+<td>10.18 min</td>
+</tr>
+<tr>
+<td>v5.0</td>
+<td>Llama 2 70B LoRA</td>
+<td>GB200</td>
+<td>8</td>
+<td>11.14 min</td>
+</tr>
+<tr>
+<td>v5.1</td>
+<td>Llama 2 70B LoRA</td>
+<td>MI350X</td>
+<td>8</td>
+<td>12.23 min</td>
+</tr>
+<tr>
+<td>v5.1</td>
+<td>Llama 2 70B LoRA</td>
+<td>MI325X</td>
+<td>8</td>
+<td>21.05 min</td>
+</tr>
+<tr>
+<td>v5.0</td>
+<td>Llama 2 70B LoRA</td>
+<td>H100</td>
+<td>8</td>
+<td>27.93 min</td>
+</tr>
+<tr>
+<td>v5.1</td>
+<td>Llama 2 70B LoRA</td>
+<td>MI300X</td>
+<td>8</td>
+<td>28.02 min</td>
+</tr>
+<tr>
+<td>v5.1</td>
+<td>Llama 3.1 8B</td>
+<td>MI355X</td>
+<td>8</td>
+<td>99.71 min</td>
+</tr>
+<tr>
+<td>v5.1</td>
+<td>Llama 3.1 8B</td>
+<td>MI350X</td>
+<td>8</td>
+<td>122.93 min</td>
+</tr>
+</tbody>
+</table>
+<p>MI355X at 10.18 minutes against NVIDIA's 11.145-minute GB200 result is close to parity — but note the rounds differ by six months of NVIDIA software optimisation, and in v6.0 AMD did not submit to the two new MoE benchmarks, so no full-suite like-for-like comparison exists. Nine OEM partners submitted on Instinct in v5.1, the broadest AMD ecosystem participation so far. (confirmed)</p>
+<h3 id="62-intel">6.2 Intel</h3>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Launch</th>
+<th>Process</th>
+<th>Memory</th>
+<th>BW (TB/s)</th>
+<th>BF16 dense</th>
+<th>FP8 dense</th>
+<th>FP4 dense</th>
+<th>TDP</th>
+<th>Scale-up</th>
+<th>Domain</th>
+<th>Unit price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gaudi 2</strong></td>
+<td>2022-Q2</td>
+<td>TSMC N7</td>
+<td>96 GB HBM2e</td>
+<td>2.46</td>
+<td>432 TF</td>
+<td>865 TF</td>
+<td>—</td>
+<td>600 W</td>
+<td>600 GB/s</td>
+<td>8</td>
+<td>$8,125 (list)</td>
+</tr>
+<tr>
+<td><strong>Gaudi 3</strong></td>
+<td>2024-Q3</td>
+<td>TSMC N5</td>
+<td>128 GB HBM2e</td>
+<td>3.67</td>
+<td>1,835 TF</td>
+<td>1,835 TF</td>
+<td>—</td>
+<td>900 W</td>
+<td>1,200 GB/s</td>
+<td>8</td>
+<td>$15,625 (list)</td>
+</tr>
+<tr>
+<td><strong>Ascend 910B</strong></td>
+<td>2023-Q3</td>
+<td>SMIC N+1/N+2</td>
+<td>64 GB HBM2e</td>
+<td>1.60</td>
+<td>400 TF</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>$10,000 (estimate)</td>
+</tr>
+<tr>
+<td><strong>Ascend 910C</strong></td>
+<td>2025-Q1</td>
+<td>SMIC 7nm</td>
+<td>128 GB HBM2e</td>
+<td>3.20</td>
+<td>780 TF</td>
+<td>—</td>
+<td>—</td>
+<td>600 W</td>
+<td>350 GB/s</td>
+<td>384</td>
+<td>$15,000 (estimate)</td>
+</tr>
+</tbody>
+</table>
+<p>Gaudi 3's genuine differentiator is that <strong>scale-up and scale-out both run on the same on-die Ethernet NICs</strong>: 24 × 200 Gb/s RoCE v2 giving 1,200 GB/s per accelerator, with an 8-OAM node fully peer-to-peer and <strong>no switch inside the node</strong>. Intel's pitch was explicitly about avoiding "risky investments in locked, proprietary technologies such as NVLink, NVSwitch, and InfiniBand," and it claims 33% more I/O per accelerator than H100.</p>
+<p>The unusual fact about Intel is price transparency: it is the only vendor that ever published accelerator list prices — <strong>$125,000 for an 8-card Gaudi 3 baseboard including networking</strong> (≈$15,625 per accelerator) and $65,000 for Gaudi 2, positioned at two-thirds and one-third of "comparable competitive platforms." Any comparison against an HGX system should add InfiniBand or Ethernet NIC cost to the NVIDIA side, since Gaudi's fabric is on-die. (confirmed)</p>
+<p>The architectural catch: <strong>Gaudi 3's FP8 rate equals its BF16 rate</strong> at 1,835 TFLOP/s. There is no 2× FP8 speedup — Gaudi 2 had one. For FP8-heavy inference that is roughly half an H100's dense FP8 throughput, while being competitive on BF16 and ahead on memory.</p>
+<p><strong>Falcon Shores was cancelled as a product</strong> in January 2025 — "an internal test chip only, without bringing it to market" — with a revealing stated reason: "it's not enough to just deliver the silicon… what customers really want is that full-scale rack solution." Intel also missed its $500M Gaudi 3 revenue target, citing software. What replaced it is a deliberate retreat from the frontier: <strong>Crescent Island</strong> (announced October 2025, sampling H2 2026) uses <strong>160 GB of LPDDR5X rather than HBM</strong> and is air-cooled, sidestepping HBM supply competition entirely at the cost of bandwidth far below any HBM part. It is a "tokens-as-a-service" inference capacity play. <strong>Jaguar Shores</strong> is the announced rack-scale answer, with no published specifications or date. (confirmed)</p>
+<h3 id="63-huawei">6.3 Huawei</h3>
+<p>Ascend 910C is a dual-die DaVinci part on SMIC 7nm: 780 dense BF16 TFLOP/s, 128 GB HBM2e at 3.2 TB/s, roughly 600 W, and — the single biggest handicap — <strong>no native FP8 or FP4 path</strong>, arriving only with the Ascend 950 generation. Every low-precision throughput multiplier the rest of the industry is monetising is unavailable.</p>
+<p>Provenance warning: Huawei publishes no 910C datasheet. The canonical figures trace to Huawei's own CloudMatrix paper, <strong>arXiv:2506.12708 version 1</strong> — version 2 deleted the sentence giving the chip's throughput and version 3 renamed the part, so citations must be pinned to v1. (estimate)</p>
+<p><strong>CloudMatrix 384</strong> is the system that matters, and it is an honest statement of the strategy: 384 Ascend 910C delivering about 300 BF16 PFLOP/s and 49.2 TB of HBM — roughly 1.9× the compute and 3.6× the memory of a GB200 NVL72 — at <strong>559 kW against 132 kW</strong>. Per-chip efficiency is roughly a third of NVIDIA's. It is a brute-force answer to export controls: win at system level by spending the input China has (power) to compensate for the one it does not (leading-edge silicon and HBM).</p>
+<p>The 2026 roadmap is aggressive and constrained by the same two things. <strong>Ascend 950PR</strong> (Q1 2026, ~1 PFLOPS FP8, 128 GB HiBL 1.0 at 1.6 TB/s) and <strong>950DT</strong> (Q4 2026, ~2 PFLOPS FP4, 144 GB HiZQ 2.0 at 4 TB/s) finally add FP8/FP4 and MXFP formats, with UB 2.0 cutting single-hop latency from 2 µs to 200 ns. The <strong>Atlas 950 SuperPod</strong> targets 8,192 chips, 8 EFLOPS FP8, and 16 PB/s of all-optical interconnect. A widely-reported 96 GB variant of the 950DT is read as a direct response to domestic HBM constraints. Production capacity is the binding limit: roughly 200,000 Ascend 910-series chips in 2025 against a 2026 target near 600,000, versus Chinese demand estimated at 1.0–1.5 million advanced AI chips. (estimate)</p>
+<hr />
+<h2 id="7-google-tpu-generation-by-generation">7. Google TPU, generation by generation</h2>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Launch</th>
+<th>Process</th>
+<th>Memory</th>
+<th>BW (TB/s)</th>
+<th>BF16 dense</th>
+<th>FP8 dense</th>
+<th>FP4 dense</th>
+<th>TDP</th>
+<th>Scale-up</th>
+<th>Domain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TPU v2</strong></td>
+<td>2017-Q3</td>
+<td>16nm</td>
+<td>16 GB HBM</td>
+<td>0.70</td>
+<td>46 TF</td>
+<td>—</td>
+<td>—</td>
+<td>280 W</td>
+<td>248 GB/s</td>
+<td>256</td>
+</tr>
+<tr>
+<td><strong>TPU v3</strong></td>
+<td>2018-Q4</td>
+<td>16nm</td>
+<td>32 GB HBM</td>
+<td>0.90</td>
+<td>123 TF</td>
+<td>—</td>
+<td>—</td>
+<td>450 W</td>
+<td>280 GB/s</td>
+<td>1,024</td>
+</tr>
+<tr>
+<td><strong>TPU v4</strong></td>
+<td>2020-Q4</td>
+<td>7nm</td>
+<td>32 GB HBM2</td>
+<td>1.20</td>
+<td>275 TF</td>
+<td>275 TF</td>
+<td>—</td>
+<td>—</td>
+<td>300 GB/s</td>
+<td>4,096</td>
+</tr>
+<tr>
+<td><strong>TPU v5e</strong></td>
+<td>2023-Q3</td>
+<td>not published</td>
+<td>16 GB HBM2e</td>
+<td>0.80</td>
+<td>197 TF</td>
+<td>393 TF</td>
+<td>—</td>
+<td>—</td>
+<td>400 GB/s</td>
+<td>256</td>
+</tr>
+<tr>
+<td><strong>TPU v5p</strong></td>
+<td>2023-Q4</td>
+<td>not published</td>
+<td>95 GB HBM2e</td>
+<td>2.77</td>
+<td>459 TF</td>
+<td>459 TF</td>
+<td>—</td>
+<td>—</td>
+<td>1,200 GB/s</td>
+<td>8,960</td>
+</tr>
+<tr>
+<td><strong>TPU v6e (Trillium)</strong></td>
+<td>2024-Q4</td>
+<td>not published</td>
+<td>32 GB HBM</td>
+<td>1.64</td>
+<td>918 TF</td>
+<td>918 TF</td>
+<td>—</td>
+<td>—</td>
+<td>800 GB/s</td>
+<td>256</td>
+</tr>
+<tr>
+<td><strong>TPU v7 (Ironwood)</strong></td>
+<td>2025-Q4</td>
+<td>TSMC N3P (reported)</td>
+<td>192 GB HBM3E</td>
+<td>7.38</td>
+<td>2,307 TF</td>
+<td>4,614 TF</td>
+<td>—</td>
+<td>1,000 W</td>
+<td>1,200 GB/s</td>
+<td>9,216</td>
+</tr>
+<tr>
+<td><strong>TPU 8t</strong></td>
+<td>2026-H2</td>
+<td>not published</td>
+<td>216 GB HBM</td>
+<td>6.53</td>
+<td>—</td>
+<td>—</td>
+<td>12,600 TF</td>
+<td>—</td>
+<td>—</td>
+<td>9,600</td>
+</tr>
+<tr>
+<td><strong>TPU 8i</strong></td>
+<td>2026-H2</td>
+<td>not published</td>
+<td>288 GB HBM</td>
+<td>8.60</td>
+<td>—</td>
+<td>—</td>
+<td>10,100 TF</td>
+<td>—</td>
+<td>—</td>
+<td>1,152</td>
+</tr>
+</tbody>
+</table>
+<p>Google publishes no clock speed, process node or per-chip TDP for anything after v4, so those columns are blank rather than guessed. The ~1 kW figure used for Ironwood elsewhere in this report is inferred from "nearly 10 MW" for a 9,216-chip pod and therefore includes rack overhead.</p>
+<h3 id="71-what-each-generation-was-actually-for">7.1 What each generation was actually for</h3>
+<p><strong>v1 (2015), inference only.</strong> A 256×256 systolic array at 700 MHz: 65,536 8-bit MACs × 0.7 GHz ≈ 92 TOPS, exactly Google's published figure. 28 nm, 75 W, 8 GB of DDR3.</p>
+<p><strong>v2 (2017), the first trainable TPU.</strong> Google shrank the array to 128×128 — a deliberate trade favouring utilisation on narrower matrices — added HBM and ICI links, and made a 256-chip pod.</p>
+<p><strong>v3 (2018).</strong> Two MXUs per TensorCore, 32 GB HBM, liquid cooling, 1,024-chip pods.</p>
+<p><strong>v4 (2020, GA 2022).</strong> The most important generation architecturally: 7 nm, <strong>128 MiB of CMEM</strong>, 4 SparseCores, and the first <strong>optically reconfigurable 3D torus</strong> at 4,096 chips per pod (1.1 EFLOPS BF16). The die is <em>smaller</em> than v3's despite twice the matrix multipliers. PaLM 540B was trained on 6,144 v4 chips; Gemini Ultra used "a large fleet of TPUv4 accelerators… across multiple datacenters"; Apple trained AFM-server on 8,192 v4 chips.</p>
+<p><strong>v5e (2023), cost-optimised.</strong> One TensorCore, 16 GB, 256-chip pods, air-cooled, and the cheapest TPU on the rate card at $1.20/chip-hour ($0.54 on a 3-year commit).</p>
+<p><strong>v5p (2023), the training flagship of its era.</strong> Megacore (two TensorCores presented as one logical core over a unified memory space), 95 GB HBM at 2.765 TB/s, 3D torus, single slices to 6,144 chips and <strong>multislice to 18,432</strong>.</p>
+<p><strong>v6e Trillium (2024).</strong> First 256×256 MXU, 918 dense BF16 TFLOP/s, back to 256-chip pods. Google's claim is 1.8× better performance per dollar than v5p (45% lower cost to train), with 99% weak-scaling efficiency across 8 Trillium-256 slices over multislice versus 94% for v5p within a single ICI domain. (confirmed as a vendor claim; the perf/$ number is unauditable within MLPerf)</p>
+<p><strong>v7 Ironwood (2025, GA 2026).</strong> The first dual-compute-die TPU: <strong>2,307 dense BF16 / 4,614 FP8 TFLOP/s, 192 GiB HBM3E at 7.38 TB/s, 128 MiB VMEM, 4th-gen SparseCore with collective offloading, 1.2 TB/s ICI, 9,216-chip superpods at 42.5 FP8 EFLOPS with 1.77 PB of directly addressable shared HBM in nearly 10 MW.</strong> Google claims 2× the perf/W of Trillium and about 30× its 2018 Cloud TPU. <strong>No Ironwood MLPerf submission exists</strong> — the most recent TPU training submission is Trillium in v5.0, June 2025 — so every Ironwood-versus-Blackwell training comparison in circulation is spec-sheet arithmetic. (confirmed for specs; flagged for comparisons)</p>
+<p><strong>Eighth generation (announced April 2026): the split.</strong> Google stopped building one chip for both jobs.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>TPU 8t (training)</th>
+<th>TPU 8i (inference)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Topology</td>
+<td>3D torus</td>
+<td><strong>Boardfly</strong> high-radix, Dragonfly-inspired</td>
+</tr>
+<tr>
+<td>Pod</td>
+<td><strong>9,600 chips</strong></td>
+<td>1,152 chips</td>
+</tr>
+<tr>
+<td>HBM</td>
+<td>216 GB @ 6.53 TB/s</td>
+<td><strong>288 GB @ 8.6 TB/s</strong></td>
+</tr>
+<tr>
+<td>On-chip SRAM</td>
+<td>128 MB</td>
+<td><strong>384 MB</strong> (3× Ironwood)</td>
+</tr>
+<tr>
+<td>Peak FP4</td>
+<td><strong>12.6 PFLOP/s</strong></td>
+<td>10.1 PFLOP/s</td>
+</tr>
+<tr>
+<td>Specialised units</td>
+<td>SparseCore + LLM Decoder Engine</td>
+<td><strong>Collectives Acceleration Engine</strong> replaces SparseCore</td>
+</tr>
+<tr>
+<td>Claimed vs Ironwood</td>
+<td>2.7× perf/$ training, up to 2× perf/W</td>
+<td>80% better perf/$ inference</td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed from Google's announcement and technical deep dive; the claimed multiples are vendor figures)</p>
+<p>The reasoning Google published is the clearest statement anywhere of why topology follows workload: dense pretraining is neighbour-dominated, so 8t keeps the torus; MoE and reasoning are all-to-all-dominated, so 8i abandons it. Google shows the arithmetic — a 1,024-chip 8×8×16 torus has a 16-hop diameter, Boardfly reaches the same 1,024 chips in <strong>7 hops</strong>, a 56% reduction. 8t also adds <strong>native FP4 in the MXU</strong>, a more balanced VPU so quantisation and normalisation overlap better with matmul, and <strong>TPUDirect RDMA and Storage</strong> moving data between HBM and NICs or Lustre without transiting host DRAM. Both are hosted on Arm Axion CPUs, which Google says "removed the host bottleneck caused by data preparation latency." The Virgo fabric links over 134,000 8t chips with up to 47 Pb/s of non-blocking bisection, and Google states JAX plus Pathways can "scale to more than 1 million TPU chips in a single training cluster."</p>
+<p>One caveat: secondary reporting of "331.8 exaFLOPS FP8 per 8i pod" does not reconcile — 1,152 chips × ~5 PFLOPS ≈ 5.8 EFLOPS, and 6.74 × Ironwood's 42.5 would be 286 EFLOPS, not 331.8. The 8t figure does reconcile cleanly (9,600 × 12.6 PFLOPS = 121 EFLOPS = 2.84 × Ironwood). Treat the 8i pod aggregate as unverified. (flagged)</p>
+<h3 id="72-pricing-the-one-authoritative-accelerator-price-list-in-the-industry">7.2 Pricing — the one authoritative accelerator price list in the industry</h3>
+<p>TPUs are GCP-only: you cannot buy one, no third party resells them, and the only on-prem path is Google Distributed Cloud. In exchange, Google publishes real prices.</p>
+<table>
+<thead>
+<tr>
+<th>Generation</th>
+<th>On-demand</th>
+<th>Flex-start (queued)</th>
+<th>1-year commit</th>
+<th>3-year commit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>v7 Ironwood</strong> (us-central1)</td>
+<td><strong>$12.00</strong></td>
+<td>$6.00</td>
+<td>$8.40</td>
+<td><strong>$5.40</strong></td>
+</tr>
+<tr>
+<td>v6e Trillium (us-east1/5)</td>
+<td>$2.70</td>
+<td>$1.35</td>
+<td>$1.89</td>
+<td>$1.22</td>
+</tr>
+<tr>
+<td>v5p (us-east5)</td>
+<td>$4.20</td>
+<td>$2.10</td>
+<td>$2.94</td>
+<td>$1.89</td>
+</tr>
+<tr>
+<td>v5e (us-central1)</td>
+<td>$1.20</td>
+<td>$0.60</td>
+<td>$0.84</td>
+<td>$0.54</td>
+</tr>
+<tr>
+<td>v4 pod (us-central2)</td>
+<td>$3.22</td>
+<td>—</td>
+<td>$2.03</td>
+<td>$1.45</td>
+</tr>
+</tbody>
+</table>
+<p>(confirmed — <code>cloud.google.com/tpu/pricing</code>, retrieved 20 August 2026)</p>
+<p>Two structural features worth extracting. The <strong>3-year commitment is a flat 55% discount</strong> and the 1-year a flat 30%, across every generation. And <strong>flex-start is a 50% discount with no commitment at all</strong> — for Ironwood that is $6.00, cheaper than the 1-year commit. If your workload tolerates queuing, flex-start is the best rate available without signing anything. Note also that the console bills in VM-hours, not chip-hours: a 4-chip v4 host shows as $12.88/hour.</p>
+<p>Spot pricing is not published as a table; Google says only that spot prices "can change up to once every 30 days."</p>
+<p>Against that list price, SemiAnalysis estimates Anthropic pays about <strong>$1.60 per Ironwood chip-hour</strong> — 7.5× below list — and characterises the list as "car-salesman" pricing: "No major customers of TPUs is paying anywhere close to that much." (estimate)</p>
+<h3 id="73-who-trains-on-tpus">7.3 Who trains on TPUs</h3>
+<ul>
+<li><strong>PaLM 540B</strong>: 6,144 v4 chips across two pods, 3,072 per pod on 768 hosts, model+data parallelism within a pod and pure data parallelism across pods. (confirmed)</li>
+<li><strong>Gemini</strong>: "We trained Gemini models using TPUv5e and TPUv4… Training Gemini Ultra used a large fleet of TPUv4 accelerators owned by Google across multiple datacenters." Gemini 1.5 used multiple 4,096-chip v4 pods across datacenters. (confirmed)</li>
+<li><strong>Apple</strong>: AFM-server on 8,192 TPU v4; AFM-on-device on 2,048 TPU v5p. Notable mainly as evidence that a company with no Google Cloud dependency chose TPUs on merit. (confirmed)</li>
+<li><strong>Anthropic</strong>: up to <strong>one million TPUs</strong> and "well over a gigawatt of compute capacity online in 2026" (October 2025), expanded in April 2026 with Google and Broadcom to multiple further gigawatts from 2027 — roughly 3.5 GW per a Broadcom SEC filing. Google Cloud's CEO attributed the choice to TPU "price-performance and efficiency." (confirmed announcement; the 3.5 GW figure is filing-derived)</li>
+</ul>
+<p>The Gemini infrastructure detail worth stealing: instead of periodic checkpointing to cluster storage, Google used <strong>redundant in-memory copies of model state</strong> and recovered from an intact replica, lifting goodput from 85% to 97%.</p>
+<hr />
+<h2 id="8-the-other-asics">8. The other ASICs</h2>
+<p><a id="8-the-other-asics"></a></p>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Launch</th>
+<th>Process</th>
+<th>Memory</th>
+<th>BW (TB/s)</th>
+<th>BF16 dense</th>
+<th>FP8 dense</th>
+<th>FP4 dense</th>
+<th>TDP</th>
+<th>Scale-up</th>
+<th>Domain</th>
+<th>Unit price</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Trainium1</strong></td>
+<td>2022-Q4</td>
+<td>not published</td>
+<td>32 GB HBM</td>
+<td>0.80</td>
+<td>191 TF</td>
+<td>191 TF</td>
+<td>—</td>
+<td>—</td>
+<td>384 GB/s</td>
+<td>16</td>
+<td>cloud-only</td>
+</tr>
+<tr>
+<td><strong>Trainium2</strong></td>
+<td>2024-Q4</td>
+<td>not published</td>
+<td>96 GB HBM</td>
+<td>2.90</td>
+<td>667 TF</td>
+<td>1,299 TF</td>
+<td>—</td>
+<td>—</td>
+<td>1,280 GB/s</td>
+<td>64</td>
+<td>cloud-only</td>
+</tr>
+<tr>
+<td><strong>Trainium3</strong></td>
+<td>2025-Q4</td>
+<td>TSMC N3</td>
+<td>144 GB HBM3e</td>
+<td>4.90</td>
+<td>671 TF</td>
+<td>2,517 TF</td>
+<td>2,517 TF</td>
+<td>—</td>
+<td>2,048 GB/s</td>
+<td>144</td>
+<td>cloud-only</td>
+</tr>
+<tr>
+<td><strong>Inferentia2</strong></td>
+<td>2023-Q1</td>
+<td>not published</td>
+<td>32 GB HBM</td>
+<td>0.82</td>
+<td>190 TF</td>
+<td>190 TF</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>cloud-only</td>
+</tr>
+<tr>
+<td><strong>MTIA v2</strong></td>
+<td>2024-Q2</td>
+<td>TSMC N5</td>
+<td>128 GB LPDDR5</td>
+<td>0.20</td>
+<td>177 TF</td>
+<td>—</td>
+<td>—</td>
+<td>90 W</td>
+<td>—</td>
+<td>—</td>
+<td>internal</td>
+</tr>
+<tr>
+<td><strong>MTIA 300</strong></td>
+<td>2026-Q1</td>
+<td>not published</td>
+<td>216 GB HBM</td>
+<td>6.10</td>
+<td>—</td>
+<td>1,200 TF</td>
+<td>—</td>
+<td>800 W</td>
+<td>—</td>
+<td>—</td>
+<td>internal</td>
+</tr>
+<tr>
+<td><strong>MTIA 400</strong></td>
+<td>2026-H2</td>
+<td>not published</td>
+<td>288 GB HBM</td>
+<td>9.20</td>
+<td>3,000 TF</td>
+<td>6,000 TF</td>
+<td>12,000 TF</td>
+<td>1,200 W</td>
+<td>150 GB/s</td>
+<td>72</td>
+<td>internal</td>
+</tr>
+<tr>
+<td><strong>Maia 100</strong></td>
+<td>2024-Q2</td>
+<td>TSMC N5</td>
+<td>64 GB HBM2E</td>
+<td>1.80</td>
+<td>800 TF</td>
+<td>—</td>
+<td>—</td>
+<td>500 W</td>
+<td>600 GB/s</td>
+<td>—</td>
+<td>internal</td>
+</tr>
+<tr>
+<td><strong>Maia 200</strong></td>
+<td>2026-Q1</td>
+<td>TSMC N3P</td>
+<td>216 GB HBM3e</td>
+<td>7.00</td>
+<td>1,268 TF</td>
+<td>5,072 TF</td>
+<td>10,145 TF</td>
+<td>750 W</td>
+<td>2,800 GB/s</td>
+<td>6,144</td>
+<td>internal</td>
+</tr>
+<tr>
+<td><strong>Cerebras WSE-3</strong></td>
+<td>2024-Q1</td>
+<td>TSMC N5</td>
+<td>44 GB SRAM (on-wafer)</td>
+<td>21,000.00</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>23,000 W</td>
+<td>—</td>
+<td>1</td>
+<td>system-only</td>
+</tr>
+<tr>
+<td><strong>Groq LPU v1</strong></td>
+<td>2022-Q1</td>
+<td>GF 14nm</td>
+<td>230 MB SRAM only</td>
+<td>80.00</td>
+<td>188 TF</td>
+<td>—</td>
+<td>—</td>
+<td>215 W</td>
+<td>—</td>
+<td>1</td>
+<td>system-only</td>
+</tr>
+<tr>
+<td><strong>Groq 3 LPU (NVIDIA LPX)</strong></td>
+<td>2026-Q3</td>
+<td>Samsung SF4X</td>
+<td>500 MB SRAM only</td>
+<td>150.00</td>
+<td>—</td>
+<td>1,230 TF</td>
+<td>—</td>
+<td>—</td>
+<td>2,500 GB/s</td>
+<td>256</td>
+<td>system-only</td>
+</tr>
+<tr>
+<td><strong>SambaNova SN40L</strong></td>
+<td>2024-Q3</td>
+<td>TSMC N5</td>
+<td>64 GB HBM+1.5TB DDR</td>
+<td>1.80</td>
+<td>640 TF</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>16</td>
+<td>system-only</td>
+</tr>
+<tr>
+<td><strong>Tenstorrent Blackhole p150a</strong></td>
+<td>2025-Q2</td>
+<td>TSMC N6</td>
+<td>32 GB GDDR6</td>
+<td>0.51</td>
+<td>332 TF</td>
+<td>664 TF</td>
+<td>—</td>
+<td>300 W</td>
+<td>400 GB/s</td>
+<td>32</td>
+<td>$1,399 (list)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="81-aws-trainium-the-largest-non-nvidia-training-fleet">8.1 AWS Trainium — the largest non-NVIDIA training fleet</h3>
+<p>AWS is unusually explicit about dense versus sparse, which makes its numbers easy to trust. Trainium2: 8 NeuronCore-v3, <strong>1,299 dense FP8 TFLOP/s</strong> (2,563 sparse), 96 GiB HBM at 2.9 TB/s, 224 MiB of SBUF on-chip SRAM, NeuronLink-v3 at 1.28 TB/s, and a <strong>64-chip UltraServer</strong> memory pool. Trainium3 (GA December 2025) is AWS's first 3 nm chip: <strong>2,517 dense MXFP8 TFLOP/s</strong>, 144 GB HBM3e at 4.9 TB/s, NeuronLink-v4 at 2 TB/s, and a <strong>144-chip scale-up domain</strong> built as 36 servers × 4 chips behind a two-level NeuronSwitch — "optimized for… Mixture of Experts models and autoregressive inference serving."</p>
+<p>Confirmed by Amazon: the chips business is now at a <strong>&gt;$25B revenue run rate</strong>; Anthropic has committed to <strong>up to 5 GW</strong> of current and future Trainium and runs Claude on <strong>over one million Trainium2 chips</strong>; <strong>OpenAI has committed to 2 GW</strong> of Trainium capacity from 2027; Trn3 UltraServers deliver up to 4.4× the compute of Trn2 and <strong>&gt;5× the output tokens per megawatt</strong>.</p>
+<p><strong>Project Rainier</strong> is the physical expression: an $11B, 1,200-acre campus in New Carlisle, Indiana, operational from late October 2025 with roughly <strong>500,000 Trainium2 chips</strong> in 7 of 30 planned buildings, sized for eventual 2.2 GW. AWS calls it "the world's largest cluster of non-NVIDIA AI chips." Be careful with chip counts in circulation: ~500k at New Carlisle, &gt;1M in Anthropic's company-wide fleet, and ~1.4M Trainium2 deployed across all AWS customers are three different numbers. (confirmed / estimate as noted)</p>
+<p>Pricing: only Trn1 has a full public on-demand rate card ($1.34 per chip-hour). For Trn2, the citable AWS-published rate is <strong>Capacity Blocks at $2.235 per chip-hour</strong>; third-party trackers showing ~$0.54 per Trainium2 chip-hour are almost certainly spot and should not be planned against. Trainium3 has no published public price at all. (confirmed / flagged)</p>
+<p>For calibration at published rates: Trainium2 is about <strong>$1.72 per dense FP8 PFLOP-hour</strong> versus Ironwood at $2.60 on-demand or $1.17 on a 3-year commit.</p>
+<h3 id="82-meta-mtia-internal-only-and-the-most-candid-roadmap">8.2 Meta MTIA — internal-only, and the most candid roadmap</h3>
+<p>MTIA is not for sale and not rentable, but Meta publishes unusually detailed specifications and, more valuable, unusually honest caveats. MTIA v2: TSMC N5, 421 mm², 8×8 PE grid at 1.35 GHz, <strong>354 dense INT8 / 177 dense BF16 TFLOP/s</strong>, 256 MB of on-chip SRAM at 2.7 TB/s, and <strong>128 GB of LPDDR5 at only 204.8 GB/s</strong> — entirely appropriate for ranking and recommendation, where the bottleneck is embedding capacity and random access rather than sequential bandwidth, and the reason its perf/W (7.8 TOPS/W) beats an H100's (5.65).</p>
+<p>Meta's admission about sparsity is the single most useful sentence any vendor has published on the subject: 2:4 sparsity is in the hardware, but "our production experience indicates that exploiting sparsity is challenging due to potential quality loss in our recommendation models… <strong>this feature is not yet widely used in production</strong>."</p>
+<p>The March 2026 roadmap is four generations on a roughly six-month cadence, enabled by modular chiplets sharing one chassis, rack and network: <strong>MTIA 300</strong> (in production, 1.2 PFLOPS FP8, 216 GB @ 6.1 TB/s, 800 W), <strong>MTIA 400</strong> (deploying 2026, 6 PFLOPS FP8 / 12 PFLOPS MX4, 288 GB @ 9.2 TB/s, 1,200 W, <strong>72 devices in one scale-up domain</strong>), then 450 and 500 in 2027. Meta inverts the industry's usual logic explicitly: "Mainstream chips are typically built for the most demanding workload — large-scale GenAI pre-training — and then applied, often less cost-effectively, to other workloads… <strong>We take the opposite approach</strong>: MTIA 450 and 500 are optimized first for GenAI inference." Everything is built on PyTorch, vLLM, Triton and OCP standards.</p>
+<p>Flag: the published MTIA 450/500 FP8 figures (7 and 10 PFLOPS) do not reconcile with Meta's own claim of a 25× compute increase from MTIA 300 to 500 (which would be 30 PFLOPS), while the bandwidth claim of 4.5× checks out exactly. Treat those two compute numbers as unresolved.</p>
+<h3 id="83-microsoft-maia">8.3 Microsoft Maia</h3>
+<p>Maia 100 (2024) was a supply-strategy statement as much as a chip: TSMC N5, ~820 mm², <strong>3 POPS at 6-bit / 1.5 POPS at 9-bit / 0.8 POPS BF16</strong>, ~500 MB of L1/L2 scratchpad, and deliberately <strong>HBM2E rather than HBM3</strong> — as ServeTheHome put it, "Microsoft is not competing with NVIDIA and AMD for leading-edge HBM supply." It never went beyond internal Azure OpenAI workloads.</p>
+<p><strong>Maia 200</strong> (announced 26 January 2026, in production in US Central) is a serious part: TSMC 3 nm, &gt;140B transistors, <strong>10.1 PFLOPS FP4 / 5.07 PFLOPS FP8 / 1.27 PFLOPS BF16</strong>, 216 GB HBM3e at ~7 TB/s, <strong>272 MB of fully software-managed SRAM</strong>, 2.8 TB/s of scale-up bandwidth over an integrated on-die NIC, and a scale-up domain of <strong>up to 6,144 accelerators</strong> over two-tier Ethernet with a custom AI Transport Layer. Microsoft's framing — "compilers and runtimes can place working sets explicitly to keep attention and GEMM kernels close to compute" — is a description of a TPU-style scratchpad hierarchy, not a cache. It serves GPT-5.2 among other models, targets synthetic data generation and reinforcement learning pipelines as well as inference, and Microsoft has said it "will be made available for lease to a broader customer base in the future." No public price. (confirmed)</p>
+<h3 id="84-cerebras-wafer-scale">8.4 Cerebras — wafer-scale</h3>
+<p>WSE-3: <strong>46,225 mm² of silicon (a full 21.5 × 21.5 cm wafer), 4 trillion transistors, 900,000 cores, 44 GB of on-wafer SRAM at 21 PB/s, no HBM at all, ~23 kW per CS-3 system.</strong> Yield is handled by designing for defects — redundant cores and routing, fail-in-place.</p>
+<p>Two caveats matter more than any spec. First, <strong>the headline "125 PFLOPS" is sparse FP16</strong>, and Cerebras's sparsity is unstructured, so it cannot be compared to a dense GPU number; Cerebras publishes no dense equivalent. Second, the August 2026 <strong>CS-4 is not new silicon</strong>: the WSE-3 Turbo carries the same 4T transistors, 900k cores, 44 GB SRAM and 5 nm node, and doubles throughput by roughly doubling the clock (~1.4 → ~2.8 GHz) on the back of a redesigned power path that moved conversion "100 times closer to the processors." Both compute and power roughly doubled, so <strong>perf/W is at best slightly improved</strong>; what genuinely improved is per-rack throughput and memory bandwidth per user, which is what determines tokens/sec/user on decode. A CS-4 rack is 3 wafers, 750 sparse-FP16 PFLOPS, 129.6 PB/s of memory bandwidth, 125–140 kW, shipping Q3 2026. (confirmed / estimate as noted)</p>
+<p>Cerebras is not the cheapest per token — several GPU providers undercut it, and above roughly 8 concurrent requests a rented H100 running vLLM with continuous batching produces more tokens per dollar. The value case is latency: ~3,000 tokens/sec on GPT-OSS-120B, ~1,800 on Llama 3.3 70B.</p>
+<h3 id="85-groq-now-part-of-nvidia">8.5 Groq — now part of NVIDIA</h3>
+<p>Important framing: <strong>Groq's inference silicon is no longer an independent alternative.</strong> In December 2025 NVIDIA licensed the LPU technology for <strong>$20 billion</strong>, the largest deal in its history, including acqui-hiring founder Jonathan Ross, and at GTC 2026 the result shipped as the <strong>NVIDIA Groq 3 LPU</strong>. Jensen Huang compared the integration to Mellanox.</p>
+<p>The architecture remains the purest expression of compiler-scheduled determinism in shipping silicon, and it is directly relevant to the TPU comparison:</p>
+<ul>
+<li><strong>No DRAM whatsoever.</strong> Weights live in SRAM: 230 MB at 80 TB/s on v1, 512 MB at 150 TB/s on Groq 3. Groq's framing: on-chip SRAM has "memory bandwidth upwards of 80 terabytes/second, while GPU off-chip HBM clocks in at about eight." The cost is capacity — serving Llama 2 70B took roughly <strong>576 LPUs</strong> on v1 silicon.</li>
+<li><strong>Compiler-first, literally:</strong> "We didn't touch chip design until the compiler's architecture was designed."</li>
+<li><strong>Plesiosynchronous chip-to-chip links</strong> that cancel clock drift so hundreds of LPUs behave as one logical core — determinism extended past the die boundary, which even TPUs do not attempt.</li>
+</ul>
+<p>An LPX rack is 256 LPUs, 128 GB of aggregate SRAM, 40 PB/s of aggregate bandwidth, 315 PFLOPS FP8, shipping H2 2026 as the decode partner to a Vera Rubin NVL72. (confirmed)</p>
+<h3 id="86-sambanova-and-tenstorrent">8.6 SambaNova and Tenstorrent</h3>
+<p><strong>SambaNova SN40L</strong> is the only shipping accelerator with a tightly coupled <strong>three-tier memory system</strong>: 520 MiB of on-chip PMU SRAM, 64 GiB of HBM at 1.8 TB/s, and up to 1.5 TiB of pluggable DDR at &gt;200 GB/s, with a DDR→HBM load rate above 1 TB/s. The design target is <em>model switching</em>, not raw throughput — hundreds of models resident in DDR, swapped into HBM in microseconds, aimed at composition-of-experts and agentic serving. Its dataflow execution model fuses operations into a single kernel call so data never returns to memory between stages; the ISSCC/arXiv paper reports 2×–13× speedups on 8 sockets against an unfused baseline. A 16-socket rack is 10.2 BF16 PFLOPS and runs DeepSeek R1 671B. (confirmed)</p>
+<p><strong>Tenstorrent</strong> is the only vendor here that publishes hardware list prices and sells retail: <strong>Blackhole p150a at $1,399</strong> for 120 Tensix cores, 180 MB of SRAM, 32 GB of GDDR6 at 512 GB/s, 664 TFLOPS BLOCKFP8, 300 W, four QSFP-DD 800G ports for direct card-to-card meshing, and a fully open-source RISC-V stack. A 32-chip Galaxy rack is 23 PFLOPS BLOCKFP8 from $110,000. Note a spec revision: Tenstorrent previously published 140 cores and 774 TFLOPS; after a February 2026 firmware update the official figures are <strong>120 cores and 664 TFLOPS</strong>, and many third-party pages still carry the old numbers. The counterweight is decisive for most buyers: GDDR6 at 512 GB/s is 6–15× below any HBM part, there is no cloud marketplace offering Tenstorrent capacity, and the software maturity gap is larger than AMD's. (confirmed)</p>
+<h3 id="87-what-the-field-looks-like-after-twelve-months-of-consolidation">8.7 What the field looks like after twelve months of consolidation</h3>
+<p>The non-NVIDIA field narrowed sharply. Intel cancelled Falcon Shores and retreated to LPDDR5X inference parts. NVIDIA bought Groq's technology and used it to displace its own Rubin CPX. Cerebras shipped a clock bump rather than new silicon. Meanwhile the hyperscalers went the other way: Google split its eighth generation into two purpose-built chips, Meta announced four generations in two years, Microsoft shipped Maia 200 on 3 nm, and AWS shipped 3 nm Trainium3.</p>
+<p><strong>The viable non-NVIDIA path has narrowed to vertically integrated hyperscaler silicon plus AMD, and Huawei inside China.</strong> Merchant challengers without a captive workload have not found a durable position.</p>
+<p><img alt="Estimated 2026 accelerator volumes" src="figures/fig22_shipments.png" /></p>
+<hr />
+<h2 id="9-head-to-head">9. Head to head</h2>
+<h3 id="91-everything-relative-to-one-h100">9.1 Everything relative to one H100</h3>
+<p><img alt="Normalised comparison against H100" src="figures/fig23_normalised.png" /></p>
+<p>The pattern in that figure is the single most useful thing to internalise: <strong>no current accelerator wins on every axis, and the axes are not equally important for your workload.</strong></p>
+<table>
+<thead>
+<tr>
+<th>If your bottleneck is…</th>
+<th>The winner is…</th>
+<th>Because</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dense training FLOPs per chip</td>
+<td>Rubin R100, then MI455X</td>
+<td>4.0 / 5.0 dense BF16 PFLOP/s</td>
+</tr>
+<tr>
+<td>Low-precision training throughput</td>
+<td>Rubin R100</td>
+<td>17.5 dense FP8 PFLOP/s, 3rd-gen Transformer Engine, NVFP4 recipes</td>
+</tr>
+<tr>
+<td>Memory capacity per chip</td>
+<td>MI455X (432 GB), then TPU 8i (288 GB)</td>
+<td>fewer shards, simpler parallelism</td>
+</tr>
+<tr>
+<td>Memory bandwidth per chip</td>
+<td>MI455X (~23 TB/s), Rubin (22 TB/s)</td>
+<td>HBM4 roughly triples bandwidth</td>
+</tr>
+<tr>
+<td>Tensor-parallel headroom</td>
+<td>TPU pods (9,216), then NVL72 / Helios (72)</td>
+<td>scale-up domain size</td>
+</tr>
+<tr>
+<td>Determinism at scale</td>
+<td>TPU</td>
+<td>static schedule, OCS fault isolation</td>
+</tr>
+<tr>
+<td>Cost per token served</td>
+<td>depends entirely on contract</td>
+<td>see §10</td>
+</tr>
+<tr>
+<td>Software risk</td>
+<td>NVIDIA</td>
+<td>breadth, day-one format support</td>
+</tr>
+</tbody>
+</table>
+<h3 id="92-efficiency">9.2 Efficiency</h3>
+<p><img alt="Compute and memory per watt" src="figures/fig11_perf_per_watt.png" /></p>
+<p>Chip-level perf/W favours the specialised parts, and the ordering is stable across metrics: TPU and Maia-class ASICs lead on memory per watt, Blackwell leads on compute per watt among GPUs, and Huawei's 910C trails badly because it lacks low-precision paths and rides an older node.</p>
+<p>Three caveats keep this honest. First, chip TDP excludes CPU, NIC, switch and cooling, which are a third or more of rack power. Second, Google publishes no per-chip TDP after v4, so Ironwood's ~1 kW is inferred from pod power and <em>includes</em> overhead, making its position conservative. Third, all published perf/W comparisons across vendors are vendor claims — Google's "2× Trillium and 2.8× H100", Amazon's "2.1× Trainium2", NVIDIA's Rubin figures — and <strong>no independent third-party benchmark comparing Ironwood against NVIDIA hardware existed as of August 2026.</strong></p>
+<h3 id="93-what-the-audited-benchmarks-say">9.3 What the audited benchmarks say</h3>
+<p><img alt="MLPerf time-to-train and scaling efficiency" src="figures/fig19_mlperf.png" /></p>
+<p>MLPerf Training v6.0 (June 2026), 24 organisations, 95 unique systems, 13 accelerators, 60% multi-node:</p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Platform</th>
+<th>Accelerators</th>
+<th>Time to train</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepSeek-V3 671B</td>
+<td>GB300 NVL72</td>
+<td>2,048</td>
+<td>5.54 min</td>
+</tr>
+<tr>
+<td>DeepSeek-V3 671B</td>
+<td>GB300 NVL72</td>
+<td>4,096</td>
+<td>3.09 min</td>
+</tr>
+<tr>
+<td>DeepSeek-V3 671B</td>
+<td>GB300 NVL72</td>
+<td>8,192</td>
+<td>2.02 min</td>
+</tr>
+<tr>
+<td>GPT-OSS 20B</td>
+<td>GB300 NVL72</td>
+<td>512</td>
+<td>7.43 min</td>
+</tr>
+<tr>
+<td>Llama 2 70B LoRA</td>
+<td>GB300 NVL72</td>
+<td>512</td>
+<td>0.40 min</td>
+</tr>
+<tr>
+<td>Llama 3.1 405B</td>
+<td>GB300 NVL72</td>
+<td>512</td>
+<td>58.30 min</td>
+</tr>
+<tr>
+<td>Llama 3.1 405B</td>
+<td>GB300 NVL72</td>
+<td>2,048</td>
+<td>18.50 min</td>
+</tr>
+<tr>
+<td>Llama 3.1 405B</td>
+<td>GB200 NVL72</td>
+<td>2,560</td>
+<td>18.80 min</td>
+</tr>
+<tr>
+<td>Llama 3.1 405B</td>
+<td>GB300 NVL72</td>
+<td>4,096</td>
+<td>9.80 min</td>
+</tr>
+<tr>
+<td>Llama 3.1 405B</td>
+<td>GB200 NVL72</td>
+<td>5,120</td>
+<td>10.00 min</td>
+</tr>
+<tr>
+<td>Llama 3.1 405B</td>
+<td>GB200 NVL72</td>
+<td>8,192</td>
+<td>7.07 min</td>
+</tr>
+</tbody>
+</table>
+<p>The round added two MoE benchmarks — DeepSeek-V3 671B and GPT-OSS 20B — and MLCommons was explicit about why the DeepSeek-V3 benchmark mandates a global batch size of at least 15,360: to prevent "'hero runs' on tiny batch sizes that don't reflect production-scale MoE training." A benchmark body defending against a known gaming vector is a sign of a maturing suite.</p>
+<p>The most useful single result is CoreWeave's DeepSeek-V3 scaling ladder, because it is one workload on one platform at three scales: 2,048 GPUs in 5.54 min, 4,096 in 3.09 min (<strong>89.6% scaling efficiency</strong>), 8,192 in 2.02 min (<strong>68.6%</strong>). Near-linear to 4k, clearly sublinear beyond — which is what you expect once expert-parallel all-to-all starts crossing Spectrum-X hops rather than staying inside NVL72 racks. Azure's dense Llama 3.1 405B curve holds up better (83% at 8,192 GPUs against a 40-rack baseline) because tensor parallelism stays inside the rack.</p>
+<p><strong>Eight ways these numbers mislead</strong>, worth stating because they are all common:</p>
+<ol>
+<li>"Fastest on every benchmark" is partly a coverage claim. NVIDIA was the only vendor submitting to all seven v6.0 workloads; AMD skipped both MoE benchmarks.</li>
+<li>Time-to-train at maximum scale measures the cluster, not the chip. 3.44 min on 11,616 H100s versus 11.77 min on 6,144 TPU v5p is ~1.8× per chip, not 3.4×.</li>
+<li><strong>There is no perf-per-dollar or perf-per-watt metric in the closed division.</strong> Every cost-efficiency claim — Google's Trillium perf/$, AMD's tokens-per-dollar — is unauditable within MLPerf.</li>
+<li>Cross-round comparisons are not like-for-like: AMD's v5.1 MI355X result against NVIDIA's v5.0 GB200 result spans six months of NVIDIA software work.</li>
+<li>Submitters choose their scale, and small-scale entries are cherry-picked.</li>
+<li>The benchmark models lag production. GPT-3 175B was the LLM pretraining benchmark until v5.1, five years after the model.</li>
+<li>Preview and RDI tiers are not products. Check the tier before quoting.</li>
+<li>Vendor blog numbers are not MLPerf numbers. Zyphra's "&gt;750 PFLOPs" is footnoted as an internal measurement of "a set of subsequent MLPs in BFLOAT16," not a training workload — an honest disclosure that gets dropped when the number is repeated.</li>
+</ol>
+<p>And the biggest gap of all: <strong>no TPU has been submitted since Trillium in v5.0 (June 2025).</strong> Google submitted to v6.0 on NVIDIA hardware, focusing on DeepSeek-V3. So the two most-discussed accelerators of 2026, Ironwood and Blackwell Ultra, have never met in an audited benchmark.</p>
+<h3 id="94-real-training-runs-for-calibration">9.4 Real training runs, for calibration</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params (B)</th>
+<th>Active (B)</th>
+<th>Tokens (T)</th>
+<th>Training FLOP</th>
+<th>Hardware</th>
+<th>Chips</th>
+<th>Chip-hours (M)</th>
+<th>MFU</th>
+<th>Confidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GPT-3 175B</strong></td>
+<td>175</td>
+<td>175</td>
+<td>0.30</td>
+<td>3.14e23</td>
+<td>V100</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+<tr>
+<td><strong>Chinchilla 70B</strong></td>
+<td>70</td>
+<td>70</td>
+<td>1.40</td>
+<td>5.76e23</td>
+<td>TPU v3/v4</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>PaLM 540B</strong></td>
+<td>540</td>
+<td>540</td>
+<td>0.78</td>
+<td>2.53e24</td>
+<td>TPU v4</td>
+<td>6,144</td>
+<td>—</td>
+<td>46%</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>Llama 2 70B</strong></td>
+<td>70</td>
+<td>70</td>
+<td>2.00</td>
+<td>8.40e23</td>
+<td>A100 80GB</td>
+<td>—</td>
+<td>1.72</td>
+<td>—</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>GPT-4</strong></td>
+<td>1,800</td>
+<td>280</td>
+<td>13.00</td>
+<td>2.10e25</td>
+<td>A100</td>
+<td>25,000</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+<tr>
+<td><strong>Gemini 1.0 Ultra</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>5.00e25</td>
+<td>TPU v4</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+<tr>
+<td><strong>Apple AFM-server</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>TPU v4</td>
+<td>8,192</td>
+<td>—</td>
+<td>—</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>Llama 3.1 405B</strong></td>
+<td>405</td>
+<td>405</td>
+<td>15.60</td>
+<td>3.80e25</td>
+<td>H100 80GB</td>
+<td>16,384</td>
+<td>30.84</td>
+<td>41%</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>DeepSeek-V3</strong></td>
+<td>671</td>
+<td>37</td>
+<td>14.80</td>
+<td>3.70e24</td>
+<td>H800</td>
+<td>2,048</td>
+<td>2.79</td>
+<td>—</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>Grok-2</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>3.00e25</td>
+<td>H100</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+<tr>
+<td><strong>NVFP4 12B</strong></td>
+<td>12</td>
+<td>12</td>
+<td>10.00</td>
+<td>7.20e23</td>
+<td>Blackwell</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>confirmed</td>
+</tr>
+<tr>
+<td><strong>Grok-3</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>4.60e26</td>
+<td>H100/H200 Colossus</td>
+<td>150,000</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+<tr>
+<td><strong>GPT-4.5</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>3.80e26</td>
+<td>H100 Azure</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+<tr>
+<td><strong>Grok 4</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>5.00e26</td>
+<td>H100/H200 Colossus</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>estimate</td>
+</tr>
+</tbody>
+</table>
+<p>Two observations. First, disclosure has collapsed: everything after 2024 is a reconstruction from hardware counts and durations, so the visible frontier is a record of <em>publicised successful runs</em>, not of compute spent. Second, Epoch AI's decomposition of the 4–5×-per-year growth in training compute is the least intuitive and most important fact here: the median annual factors are <strong>hardware quantity 1.69×, training duration 1.53×, per-chip throughput 1.41×.</strong> Most compute growth comes from buying more chips and running longer, not from faster chips. That is why datacenter power, packaging capacity and cluster reliability — not FLOPS per die — are the binding constraints in 2026.</p>
+<hr />
+<h2 id="10-supply-price-and-the-economics">10. Supply, price and the economics</h2>
+<h3 id="101-what-a-chip-costs-to-build">10.1 What a chip costs to build</h3>
+<p><img alt="Build cost composition and implied margins" src="figures/fig16_bom.png" /></p>
+<p>No vendor discloses per-part cost of goods. The estimates below descend from the 2023 Raymond James H100 teardown, extended by Epoch AI, TrendForce and SemiAnalysis; the H100 row has been independently reproduced several times, the Blackwell rows are weaker. (all estimate)</p>
+<table>
+<thead>
+<tr>
+<th>Chip</th>
+<th>Logic die</th>
+<th>HBM</th>
+<th>CoWoS packaging</th>
+<th>Substrate/test/assembly</th>
+<th>Total build</th>
+<th>Modelled sell</th>
+<th>Implied margin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H100 SXM5</td>
+<td>$300</td>
+<td><strong>$1,350</strong></td>
+<td>$750</td>
+<td>$920</td>
+<td>$3,320</td>
+<td>$28,000</td>
+<td>~88%</td>
+</tr>
+<tr>
+<td>H200 SXM5</td>
+<td>$300</td>
+<td>$1,500</td>
+<td>$750</td>
+<td>$1,700</td>
+<td>$4,250</td>
+<td>$38,000</td>
+<td>~89%</td>
+</tr>
+<tr>
+<td>B200</td>
+<td>$850</td>
+<td><strong>$2,900</strong></td>
+<td>$1,100</td>
+<td>$1,550</td>
+<td>$6,400</td>
+<td>$40,000</td>
+<td>~84%</td>
+</tr>
+<tr>
+<td>GB200 superchip</td>
+<td>$1,700</td>
+<td>$5,800</td>
+<td>$2,200</td>
+<td>$3,800</td>
+<td>$13,500</td>
+<td>$65,000</td>
+<td>~79%</td>
+</tr>
+<tr>
+<td>MI300X</td>
+<td>$600</td>
+<td>$2,900</td>
+<td>$1,500</td>
+<td>$300</td>
+<td>$5,300</td>
+<td>$15,000</td>
+<td>~65%</td>
+</tr>
+<tr>
+<td>Gaudi 3</td>
+<td>$1,500</td>
+<td>$1,950</td>
+<td>$1,200</td>
+<td>$1,350</td>
+<td>$6,000</td>
+<td>$15,625</td>
+<td>~62%</td>
+</tr>
+</tbody>
+</table>
+<p>HBM's share of build cost went from ~14% on A100 to 33–41% on H100 to ~45% on MI300X. On a B200 the memory costs roughly 3.4× the logic silicon.</p>
+<p>The 84–88% implied per-die margins are not inconsistent with NVIDIA's <strong>confirmed 74.9% corporate gross margin</strong>, because rack-scale products bundle Grace CPUs, NVSwitches, ConnectX NICs, cabling and cold plates at lower margin, and because the model excludes R&amp;D amortisation — Jensen Huang has put the NV-HBI die-to-die interconnect alone at about $10B of development.</p>
+<p>Wafer prices, for the same reason people ask: N7 ~$10k, N5 ~$17k, N3 ~$21.5k in 2026, N2 ~$30k (though TrendForce argues the real N2-versus-N3 premium is 10–20%, not 50%), A16 ~$45k. A fully processed CoWoS wafer runs $10–12k with the interposer alone at 50–70% of packaging cost. (estimate)</p>
+<h3 id="102-the-two-real-chokepoints">10.2 The two real chokepoints</h3>
+<p><img alt="CoWoS capacity, HBM share and HBM pricing" src="figures/fig17_supply.png" /></p>
+<p><strong>Advanced packaging.</strong> TSMC CoWoS capacity: ~37.5k wafers/month in 2024, ~75k in 2025, a 120–140k target for 2026, with a further &gt;60% expansion planned for 2027 and another 50–60k from OSAT partners. Against that, annual CoWoS demand went ~370k wafers (2024) → ~670k (2025) → approaching 1M (2026). The supply-demand gap is around 20%, forecast to narrow to about 10% by end-2026. NVIDIA reportedly reserved 800–850k wafers of 2026 capacity, over half the total; a competing estimate says ~60%, with the top three customers taking &gt;85%. CoWoS lead times were 40–52 weeks in early 2026. (estimate; the allocation figures are channel checks that disagree)</p>
+<p>Why this gates supply: a ~2,500 mm² H100-class interposer yields roughly 16–20 good packages per 300 mm wafer at 60–70% yield, so wafers per month converts almost directly into GPUs per month. <strong>H100 availability through 2024 was constrained by packaging, not by logic wafers.</strong></p>
+<p><strong>HBM.</strong> All three suppliers sold out their 2026 capacity under multi-year agreements; as one analysis puts it, the market "is not price-discovered; it is administratively allocated." All three shipped HBM4 in volume during H1 2026. The only hard public number is Micron's disclosed <strong>&gt;$1B of HBM4 revenue</strong>, with 12-high HBM4 ramping twice as fast as HBM3E did. Reported segment operating margins: Micron 80.4%, SK hynix 76.3%, Samsung DS 70.0%. Share estimates disagree materially between sources (SK hynix somewhere between 50% and 70% of NVIDIA's HBM4 allocation) because <strong>no supplier reports HBM revenue separately</strong>. HBM4 12-Hi 36 GB stacks are estimated at $500–600 against ~$300 for HBM3E, a 55–70% increase. (confirmed where noted; shares are estimates)</p>
+<p><strong>And increasingly, electricity.</strong> A GB200 NVL72 rack is 132 kW, a GB300 about 140 kW, an AMD Helios 125–135 kW, and a TPU v7 superpod nearly 10 MW. The GB200 chassis weighs about 1.36 tonnes and does not fit through a standard datacenter door — retrofits are frequently impossible. Transformer lead times exceed 50 weeks. Stargate Abilene has 421 MW of IT load energised of a 1.2 GW design, and a 600 MW tranche was scrapped in March 2026 on financing and demand-forecast changes. Big-four 2026 capex guidance totals about <strong>$630B, up 62%</strong> year over year. (confirmed for capex guidance and rack power; site details are estimates)</p>
+<h3 id="103-what-it-costs-to-rent">10.3 What it costs to rent</h3>
+<p><img alt="Cloud price per chip-hour across providers and tiers" src="figures/fig14_cloud_prices.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Accelerator</th>
+<th>Cheapest observed</th>
+<th>Typical neocloud on-demand</th>
+<th>Hyperscaler on-demand</th>
+<th>Committed / reserved</th>
+<th>Spread</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>H100 SXM</strong></td>
+<td>$0.27</td>
+<td>$3.29</td>
+<td>$10.53</td>
+<td>$5.19</td>
+<td>45.5×</td>
+</tr>
+<tr>
+<td><strong>H200</strong></td>
+<td>$1.97</td>
+<td>$5.45</td>
+<td>$7.91</td>
+<td>$6.87</td>
+<td>4.0×</td>
+</tr>
+<tr>
+<td><strong>B200</strong></td>
+<td>$4.26</td>
+<td>$6.79</td>
+<td>$14.24</td>
+<td>$12.36</td>
+<td>3.3×</td>
+</tr>
+<tr>
+<td><strong>B300</strong></td>
+<td>$4.48</td>
+<td>$6.19</td>
+<td>$17.80</td>
+<td>$14.04</td>
+<td>4.0×</td>
+</tr>
+<tr>
+<td><strong>GB200</strong></td>
+<td>$10.50</td>
+<td>$10.50</td>
+<td>$27.00</td>
+<td>—</td>
+<td>2.6×</td>
+</tr>
+<tr>
+<td><strong>A100 80GB</strong></td>
+<td>$0.68</td>
+<td>$2.15</td>
+<td>—</td>
+<td>$2.21</td>
+<td>4.0×</td>
+</tr>
+<tr>
+<td><strong>MI300X</strong></td>
+<td>$1.45</td>
+<td>$1.71</td>
+<td>$6.50</td>
+<td>—</td>
+<td>4.8×</td>
+</tr>
+<tr>
+<td><strong>MI355X</strong></td>
+<td>$2.59</td>
+<td>$3.60</td>
+<td>$8.60</td>
+<td>$4.25</td>
+<td>3.3×</td>
+</tr>
+<tr>
+<td><strong>Trainium1</strong></td>
+<td>$0.60</td>
+<td>—</td>
+<td>$1.34</td>
+<td>$0.60</td>
+<td>2.2×</td>
+</tr>
+<tr>
+<td><strong>Trainium2</strong></td>
+<td>$2.24</td>
+<td>—</td>
+<td>—</td>
+<td>$2.24</td>
+<td>1.0×</td>
+</tr>
+<tr>
+<td><strong>TPU v5e</strong></td>
+<td>$0.54</td>
+<td>—</td>
+<td>$1.20</td>
+<td>$0.54</td>
+<td>2.2×</td>
+</tr>
+<tr>
+<td><strong>TPU v5p</strong></td>
+<td>$1.89</td>
+<td>—</td>
+<td>$4.20</td>
+<td>$1.89</td>
+<td>2.2×</td>
+</tr>
+<tr>
+<td><strong>TPU v6e Trillium</strong></td>
+<td>$1.22</td>
+<td>—</td>
+<td>$2.70</td>
+<td>$1.22</td>
+<td>2.2×</td>
+</tr>
+<tr>
+<td><strong>TPU v7 Ironwood</strong></td>
+<td>$1.60</td>
+<td>—</td>
+<td>$12.00</td>
+<td>$1.60</td>
+<td>7.5×</td>
+</tr>
+</tbody>
+</table>
+<p>The dominant fact here is dispersion, not level. Identical H100 silicon spans <strong>$0.27 (Vast.ai spot) to $12.29 (Azure on-demand)</strong> — a 45× spread, or 12× excluding spot. MI300X spans $1.45 to $7.86. Three structural reasons: neocloud overhead is roughly $0.20–0.50 per GPU-hour against $1.00–2.00 at hyperscalers; marketplaces expose host-set prices with no SLA; and hyperscaler list prices bundle support, networking, storage and compliance that specialists do not.</p>
+<p><strong>The trend is not monotonic, and most published narratives are out of date.</strong> H100 on-demand went from roughly $7–10/hour at the 2023 peak to $2–4 by late 2025 — driven by CoWoS capacity doubling, neocloud entry, Blackwell pushing Hopper down the stack, and depreciation pressure on unsold inventory. Then it partially reversed: <strong>contract pricing rose about 40% between October 2025 and March 2026, attributed to HBM3e cost pass-through.</strong> Memory, not GPU fabrication, became the binding constraint. Blackwell lead times stretched to 3–7 months by early 2026. (estimate)</p>
+<h3 id="104-normalised-what-you-get-per-dollar">10.4 Normalised: what you get per dollar</h3>
+<p><img alt="Price per PFLOP-hour and per TB/s-hour" src="figures/fig15_price_per_flop.png" /></p>
+<table>
+<thead>
+<tr>
+<th>Offer</th>
+<th>$/chip-hour</th>
+<th>$ per dense FP8 PFLOP-hour</th>
+<th>$ per TB/s-hour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H100 SXM · Vast.ai (spot)</td>
+<td>$0.27</td>
+<td>$0.14</td>
+<td>$0.08</td>
+</tr>
+<tr>
+<td>TPU v7 Ironwood · Anthropic (negotiated) (enterprise-contract)</td>
+<td>$1.60</td>
+<td>$0.35</td>
+<td>$0.22</td>
+</tr>
+<tr>
+<td>MI355X · Vultr (spot)</td>
+<td>$2.59</td>
+<td>$0.51</td>
+<td>$0.32</td>
+</tr>
+<tr>
+<td>H100 SXM · Vast.ai (marketplace)</td>
+<td>$1.05</td>
+<td>$0.53</td>
+<td>$0.31</td>
+</tr>
+<tr>
+<td>MI300X · Azure (spot)</td>
+<td>$1.45</td>
+<td>$0.55</td>
+<td>$0.27</td>
+</tr>
+<tr>
+<td>MI355X · TensorWave (on-demand)</td>
+<td>$2.95</td>
+<td>$0.59</td>
+<td>$0.37</td>
+</tr>
+<tr>
+<td>MI300X · TensorWave (on-demand)</td>
+<td>$1.71</td>
+<td>$0.65</td>
+<td>$0.32</td>
+</tr>
+<tr>
+<td>MI355X · CoreWeave (1yr-commit)</td>
+<td>$4.25</td>
+<td>$0.84</td>
+<td>$0.53</td>
+</tr>
+<tr>
+<td>B300 · CoreWeave (spot)</td>
+<td>$4.48</td>
+<td>$0.90</td>
+<td>$0.56</td>
+</tr>
+<tr>
+<td>B200 · CoreWeave (spot)</td>
+<td>$4.26</td>
+<td>$0.95</td>
+<td>$0.55</td>
+</tr>
+<tr>
+<td>H200 · Vast.ai (marketplace)</td>
+<td>$1.97</td>
+<td>$1.00</td>
+<td>$0.41</td>
+</tr>
+<tr>
+<td>TPU v7 Ironwood · Google Cloud (3yr-commit)</td>
+<td>$5.40</td>
+<td>$1.17</td>
+<td>$0.73</td>
+</tr>
+<tr>
+<td>B200 · Vast.ai (marketplace)</td>
+<td>$5.31</td>
+<td>$1.18</td>
+<td>$0.69</td>
+</tr>
+<tr>
+<td>H100 SXM · CoreWeave (spot)</td>
+<td>$2.46</td>
+<td>$1.24</td>
+<td>$0.73</td>
+</tr>
+<tr>
+<td>H100 SXM · AWS (spot)</td>
+<td>$2.49</td>
+<td>$1.26</td>
+<td>$0.74</td>
+</tr>
+</tbody>
+</table>
+<p>Two conclusions survive normalisation.</p>
+<p><strong>Procurement channel dominates architecture.</strong> An H100 on a marketplace beats a B200 on a hyperscaler per dense FP8 PFLOP-hour. For any buyer below reserved-capacity scale, <em>where</em> you buy matters more than <em>what</em> you buy.</p>
+<p><strong>The TPU answer depends entirely on which price you are offered.</strong> Ironwood at the $12.00 list price is $2.60 per dense FP8 PFLOP-hour — unremarkable. At the $5.40 three-year rate it is $1.17. At SemiAnalysis's estimated Anthropic rate of $1.60 it is $0.35, the cheapest compute in the table by a factor of three. That 7.5× spread is the single largest pricing asymmetry in the industry.</p>
+<p>For decode-bound serving, use the memory-bandwidth column instead: dollars per TB/s-hour reorders the table and is a better proxy for tokens per second per user.</p>
+<h3 id="105-total-cost-of-ownership">10.5 Total cost of ownership</h3>
+<p>Published capex figures for a full AI datacenter, all estimates, and note carefully whether accelerators are included:</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>$ per MW</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard shell and core</td>
+<td>$10.7–11.3M</td>
+</tr>
+<tr>
+<td>AI-optimised shell with liquid cooling</td>
+<td>$12–15M</td>
+</tr>
+<tr>
+<td>AI facility plus tenant IT fit-out, <strong>excluding GPUs</strong></td>
+<td>$15–25M</td>
+</tr>
+<tr>
+<td><strong>Full stack including GPUs (GB200 NVL72)</strong></td>
+<td><strong>$30–45M</strong></td>
+</tr>
+<tr>
+<td>Epoch AI model, US hyperscaler 1 GW GB200 build</td>
+<td><strong>$38M upfront, $0.9M/yr opex, $8.5M/yr annualised TCO</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Epoch's composition: servers ~56% of capex, facility MEP/shell/labour ~30%, network and cluster infrastructure ~13%. In <em>annualised</em> TCO, servers and GPUs are ~60% and energy only ~7% — which is why the depreciation-schedule debate matters more than the electricity bill, and why the asset's economic life is the accelerator's life, not the concrete's.</p>
+<p><strong>The SemiAnalysis TPU-versus-GPU model</strong> is the most rigorous public comparison, and every number in it is an estimate: Google's internal all-in TCO per Ironwood chip is roughly <strong>44% below</strong> a GB200 server; an external GCP customer sees roughly <strong>30% below GB200 and 41% below GB300</strong> per hour; and for Anthropic, assuming 40% MFU on TPU against 30% on GB300, cost per effective PFLOP is about <strong>52% lower</strong>, with a break-even MFU of 19%. The structural explanation is not that Broadcom's silicon is cheap — Google pays Broadcom a healthy margin — but that it is far less than the margin NVIDIA earns across the <em>whole system</em>: GPU, CPU, switch, NIC, memory, cabling and rack.</p>
+<h3 id="106-export-controls-as-of-august-2026">10.6 Export controls, as of August 2026</h3>
+<p>The policy environment is now a first-order determinant of who can buy what, and it has moved repeatedly.</p>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Oct 2022</td>
+<td>Initial BIS rule; A100/H100 restricted to China</td>
+</tr>
+<tr>
+<td>Oct 2023</td>
+<td>Expanded; A800/H800 workaround parts also restricted</td>
+</tr>
+<tr>
+<td>Dec 2024</td>
+<td>HBM and semiconductor equipment controls added</td>
+</tr>
+<tr>
+<td>Jan 2025</td>
+<td>AI Diffusion Rule published — <strong>rescinded 13 May 2025 before taking effect</strong></td>
+</tr>
+<tr>
+<td>Apr 2025</td>
+<td>H20 licence requirement → NVIDIA takes a <strong>$4.5B charge</strong></td>
+</tr>
+<tr>
+<td>Aug 2025</td>
+<td>H20 and MI308 licences granted conditioned on a <strong>15% revenue share</strong> to the US government</td>
+</tr>
+<tr>
+<td>Dec 2025</td>
+<td>H200 sales to China announced as permitted at <strong>25%</strong></td>
+</tr>
+<tr>
+<td><strong>13 Jan 2026</strong></td>
+<td>BIS rule permitting case-by-case licences up to H200 / MI325X performance</td>
+</tr>
+<tr>
+<td><strong>14 Jan 2026</strong></td>
+<td>Presidential proclamation: <strong>25% import tariff</strong> on H200 and MI325X — the only two chips under both the rule and the tariff</td>
+</tr>
+<tr>
+<td>May 2026</td>
+<td>~10 Chinese firms cleared with a <strong>75,000-unit cap each</strong>; zero deliveries at that point</td>
+</tr>
+<tr>
+<td>May 2026</td>
+<td>BIS extends licensing to China/Macau-headquartered entities <strong>wherever they operate</strong></td>
+</tr>
+<tr>
+<td>Aug 2026</td>
+<td>First H200 deliveries reach ByteDance and Tencent — roughly <strong>10,000 units each, routed to Hong Kong</strong>, outside the mainland customs border, on Beijing's instruction to protect domestic chipmakers</td>
+</tr>
+</tbody>
+</table>
+<p>(all confirmed from rule text, proclamations and company filings, except delivery volumes which are press-reported)</p>
+<p>Two numbers frame the gap between policy and practice. The rule's 50% provision implies a ceiling somewhere around <strong>817,000 to 900,000 H200-equivalents</strong>; Chinese demand is estimated at about 2 million H200s. And NVIDIA's own guidance is unambiguous: as of 20 May 2026 it had "yet to generate any revenue" from H200 China licences and assumes <strong>no China datacenter compute revenue</strong> in guidance. The policy ceiling and the actual flow differ by roughly 50×.</p>
+<p>For context on the alternative: Huawei's 2026 Ascend 910C production target is about 600,000 chips (up from ~200,000 in 2025) against Chinese demand of 1.0–1.5 million, constrained by SMIC 7nm yield and domestic HBM.</p>
+<h3 id="107-the-money-confirmed">10.7 The money, confirmed</h3>
+<p>Because so much of this section is estimated, it is worth grounding in filings. NVIDIA's quarter ended 26 April 2026: <strong>$81.6B total revenue (+85% YoY), $75.2B data center (+92%), of which $60.4B compute and $14.8B networking (+199%), at 74.9% GAAP gross margin.</strong> Supply commitments rose to <strong>$145B</strong>. Management states "$1 trillion in Blackwell and Rubin revenue we foresee from 2025 through calendar 2027" and, on Rubin, "my sense is that we will be supply constrained throughout the entire life of Vera Rubin."</p>
+<p>Broadcom, the TPU co-designer: Q2 FY26 AI semiconductor revenue <strong>$10.8B (+143%)</strong> against <strong>&gt;$30B of AI bookings</strong>, guiding <strong>$56B for FY2026</strong> and <strong>&gt;$100B for FY2027</strong>, with a Google supply assurance agreement running through 2031. Marvell's custom XPU revenue doubled to $1.5B in FY26. Amazon's chips business is at a <strong>&gt;$25B run rate</strong>. (all confirmed)</p>
+<p>That is the shape of the market: custom silicon is unambiguously real and growing faster in percentage terms, while NVIDIA still captures most of the dollars because it sells the CPU, the switch, the NIC and the rack alongside the accelerator.</p>
+<hr />
+<h2 id="11-choosing-hardware">11. Choosing hardware</h2>
+<p>A decision procedure, in the order the questions actually bind.</p>
+<h3 id="111-start-with-the-constraint-not-the-chip">11.1 Start with the constraint, not the chip</h3>
+<p><strong>1. Does your model fit, and how much sharding does that force?</strong> Model state is 16 bytes per parameter. Add activations and KV cache. If ZeRO-1 data parallelism alone fits, take it — Zyphra's ZAYA1 shows that high-capacity HBM buys away entire parallelism axes, and every axis you avoid is a class of bugs and a source of communication you do not pay for. This is the strongest argument for MI300X/MI355X/MI455X and for TPU v7 over an 80 GB H100.</p>
+<p><strong>2. How large a scale-up domain does your parallelism need?</strong> If tensor parallelism above 8 or MoE expert parallelism is on the critical path, an 8-GPU HGX node will cost you dearly and a 72-chip NVL72/Helios or a TPU pod will not. The worked example in §4.4 is the whole argument: the same tensor-parallel all-reduce is 8.5% of layer time on NVLink 4 and 76% on 400G InfiniBand.</p>
+<p><strong>3. Is your workload prefill/training-shaped or decode-shaped?</strong> Training and prefill are compute-bound above ~300 FLOP/byte; decode is memory-bandwidth-bound below batch ~300 and will not be rescued by more FLOPS. Price decode capacity in dollars per TB/s-hour, not dollars per PFLOP-hour.</p>
+<p><strong>4. What is your software risk tolerance?</strong> If you write custom fused kernels for novel architectures, CUDA remains the only place where everything lands first. If you run mainstream dense or MoE transformers with PyTorch, vLLM or JAX, the alternatives work today.</p>
+<p><strong>5. What price can you actually get?</strong> This is the question most analyses skip, and it usually dominates. See §10.3.</p>
+<h3 id="112-a-rough-mapping">11.2 A rough mapping</h3>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Reasonable choice</th>
+<th>Reasoning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontier pretraining, thousands of chips, need the best software</td>
+<td>GB300 NVL72 → Vera Rubin NVL72</td>
+<td>Largest audited results, 72-chip domain, NVFP4 recipes, breadth of tooling</td>
+</tr>
+<tr>
+<td>Frontier pretraining, willing to co-design and commit for years</td>
+<td>TPU v7 / 8t pods, or Trainium3</td>
+<td>Best TCO <em>if</em> you can negotiate; determinism and OCS fault tolerance at 9k+ chips</td>
+</tr>
+<tr>
+<td>Large-scale inference serving, cost per token dominates</td>
+<td>TPU 8i, MTIA 400, Maia 200, MI355X</td>
+<td>Memory capacity and bandwidth per dollar; low kernel diversity makes non-CUDA viable</td>
+</tr>
+<tr>
+<td>MoE training, hundreds to low thousands of chips</td>
+<td>GB300/GB200 NVL72</td>
+<td>All-to-all inside one rack; see the CoreWeave scaling ladder in §9.3</td>
+</tr>
+<tr>
+<td>Fine-tuning and mid-size training on rented capacity</td>
+<td>H100/H200 from a neocloud or marketplace</td>
+<td>Cheapest dollars per PFLOP-hour anywhere; H200's 141 GB removes a sharding tier</td>
+</tr>
+<tr>
+<td>Memory-hungry inference, single node</td>
+<td>MI355X (288 GB) or MI300X (192 GB)</td>
+<td>Fits models that need 2–3 H100s on one GPU; ROCm is fine for vLLM/SGLang</td>
+</tr>
+<tr>
+<td>Latency-critical serving, tokens/sec/user is the product</td>
+<td>Cerebras CS-4, Groq/NVIDIA LPX</td>
+<td>SRAM-only bandwidth; not the cheapest per token above ~8 concurrent requests</td>
+</tr>
+<tr>
+<td>Cost-constrained enterprise inference, air-cooled racks</td>
+<td>Gaudi 3, Intel Crescent Island, L40S</td>
+<td>Published prices, no liquid cooling, no HBM supply exposure</td>
+</tr>
+<tr>
+<td>Research on a workstation</td>
+<td>RTX 5090 (32 GB, FP4) or RTX PRO 6000 (96 GB)</td>
+<td>No NVLink means single-GPU work only</td>
+</tr>
+<tr>
+<td>Learning the stack, minimal budget</td>
+<td>Tenstorrent Blackhole p150a at $1,399</td>
+<td>Open RISC-V stack; accept the software gap and 512 GB/s</td>
+</tr>
+<tr>
+<td>Inside China</td>
+<td>Ascend 910C now, 950DT when it ships</td>
+<td>Export controls make this the only supply that reliably arrives</td>
+</tr>
+</tbody>
+</table>
+<h3 id="113-five-mistakes-this-report-exists-to-prevent">11.3 Five mistakes this report exists to prevent</h3>
+<p><strong>Comparing sparse to dense.</strong> Vendor headline TFLOPS are usually 2:1 sparse. Halve them. Meta has confirmed publicly that sparsity is not used in its production models because of quality loss; assume the same everywhere unless proven otherwise.</p>
+<p><strong>Comparing peak FLOPS at all.</strong> Well-tuned dense pretraining is 40–50% MFU; decode at batch 32 is capped near 11%. A 2× peak advantage frequently delivers 1.2× in production, and sometimes nothing at all if the bottleneck is bandwidth or the fabric.</p>
+<p><strong>Comparing chips when the product is a rack.</strong> A GB200 NVL72 is not nine HGX nodes; the 72-GPU coherent domain changes which parallelism strategies are viable. Conversely, a TPU superpod is 9,216 chips, so pod-level totals are not comparable to a rack.</p>
+<p><strong>Treating a vendor's TCO advantage as your TCO advantage.</strong> SemiAnalysis's 44% figure for Ironwood is Google's internal cost of goods. You rent at a price Google sets and cannot take the silicon elsewhere. Convert every TCO claim into a quote before believing it.</p>
+<p><strong>Assuming benchmark leadership transfers.</strong> MLPerf has no perf/$ or perf/W metric, submitters choose their scale, rounds are six months apart, and Ironwood has never been submitted. The most-discussed matchup of 2026 — Ironwood versus Blackwell Ultra — has zero audited data behind it.</p>
+<h3 id="114-what-to-watch-next">11.4 What to watch next</h3>
+<ul>
+<li><strong>HBM4 supply and pricing.</strong> It is the reason rental prices rose in H1 2026. If 2027 capacity lands on schedule, that reverses; if not, GPU prices keep climbing even as packaging capacity improves.</li>
+<li><strong>Whether FP4 training becomes standard.</strong> NVFP4 has produced a 10T-token, 12B-parameter run within ~1.5% of FP8 loss. If that holds at frontier scale, effective compute per rack roughly doubles again without new silicon — and the MXFP4-versus-NVFP4 token penalty becomes a real competitive asymmetry.</li>
+<li><strong>Whether Google sells TPUs externally.</strong> Morgan Stanley's 5M-unit 2027 forecast and persistent Meta reports point that way. It would be the single biggest structural change to the market since Hopper. Currently a rumor.</li>
+<li><strong>Scale-up domain inflation.</strong> 72 today, 144 on Trainium3, 1,152–9,600 on TPU 8i/8t, 6,144 on Maia 200. If NVIDIA's 576-GPU NVLink ceiling gets used, tensor and expert parallelism get much cheaper and the parallelism playbook changes again.</li>
+<li><strong>Ethernet versus proprietary fabric for scale-up.</strong> AMD (UALink-over-Ethernet), Intel (RoCE on-die), Microsoft (Ethernet plus a custom transport) and Meta have all chosen Ethernet. CoreWeave's MLPerf record on Spectrum-X shows it works at 8,192 GPUs.</li>
+<li><strong>Power, not silicon.</strong> Growth in training compute comes 1.69× per year from more chips and 1.53× from longer runs against only 1.41× from faster chips. Gigawatt campuses, transformer lead times and grid interconnection queues are the real 2027 constraint.</li>
+</ul>
+<hr />
+<h2 id="12-appendix-methodology-conflicts-and-unknowns">12. Appendix: methodology, conflicts and unknowns</h2>
+<h3 id="121-how-this-report-was-built">12.1 How this report was built</h3>
+<pre><code>data/                        seven CSVs, every row carrying a confidence label
+  accelerators.csv           58 accelerators: specs, TDP, fabric, price
+  cloud_pricing.csv          61 offers across 14 providers and 9 pricing tiers
+  rack_systems.csv           13 rack- and pod-scale systems
+  mlperf_training.csv        MLPerf Training v4.0 through v6.0 results
+  training_runs.csv          published training compute for 14 real models
+  bom_costs.csv              modelled bill of materials for 6 chips
+  supply_chain.csv           CoWoS capacity, HBM share and price, volumes, rack power
+  llama3_failures.csv        Meta's 419-interruption failure log
+
+scripts/
+  theme.py                   shared style, vendor palette, drawing helpers
+  fig_diagrams.py            8 architecture diagrams drawn from primitives
+  fig_data.py                16 plots computed from the CSVs
+  tables.py                  markdown tables generated from the CSVs
+  build_site.py              assembles report.md and the HTML site
+
+report/report.md             the single-file report
+report/figures/              24 generated PNGs
+docs/index.html              the HTML version
+</code></pre>
+<p>Reproduce everything with <code>python3 scripts/build_site.py --figures</code>.</p>
+<p>Where the report states a derived number — job MTBF, checkpoint waste, dollars per PFLOP-hour, the tensor-parallel communication example — it is computed in code from labelled inputs, and the inputs are cited. Nothing is interpolated silently: unpublished values are blank in the CSVs and render as em-dashes in the tables.</p>
+<h3 id="122-conflicting-numbers-you-will-encounter">12.2 Conflicting numbers you will encounter</h3>
+<p>These are the disagreements most likely to bite anyone doing capacity or cost math.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>The conflict</th>
+<th>What this report uses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H100 SXM bandwidth</td>
+<td>Hopper whitepaper says 3.0 TB/s and marks it "not finalized"; product page says 3.35</td>
+<td><strong>3.35 TB/s</strong></td>
+</tr>
+<tr>
+<td>B200 memory</td>
+<td>192 GB (keynote, raw HBM) vs 186 GB (GB200 datasheet) vs 180 GB (HGX datasheet)</td>
+<td>186 / 180 GB, with 192 noted</td>
+</tr>
+<tr>
+<td>B300 memory</td>
+<td>288 GB (keynote) vs 279 / 270 GB (Oct 2025 datasheet, corroborated by Lambda's MLPerf entry)</td>
+<td><strong>279 GB</strong></td>
+</tr>
+<tr>
+<td>Blackwell Ultra INT8</td>
+<td>330 TOPS sparse where B200 lists 10 POPS — a ~30× cut, internally consistent but unexplained</td>
+<td>as published, flagged</td>
+</tr>
+<tr>
+<td>Blackwell Ultra FP64</td>
+<td>1.3 TFLOP/s vs B200's 40 — a deliberate 30× cut</td>
+<td>as published</td>
+</tr>
+<tr>
+<td>B200 SM count and L2</td>
+<td>NVIDIA publishes neither; 148 SMs and 126 MB are Chips and Cheese measurements</td>
+<td>measured values, labelled</td>
+</tr>
+<tr>
+<td>Rubin NVFP4</td>
+<td>"50 PFLOPS inference / 35 PFLOPS training" is not a 2× relationship and NVIDIA has not explained the basis</td>
+<td>as published, flagged</td>
+</tr>
+<tr>
+<td>Rubin naming</td>
+<td>"NVL144" (die count) vs shipping "NVL72" (package count)</td>
+<td><strong>NVL72</strong></td>
+</tr>
+<tr>
+<td>Rubin fabric</td>
+<td>260 TB/s in-rack NVLink vs 28.8 TB/s rack-to-rack scale-out, frequently conflated</td>
+<td>both, labelled separately</td>
+</tr>
+<tr>
+<td>MI455X bandwidth</td>
+<td>23.3 TB/s per GPU / 1.7 PB/s per rack (AMD) vs 19.6 / 1.4 (Supermicro)</td>
+<td>23.3, with 19.6 noted</td>
+</tr>
+<tr>
+<td>MI355X platform FP8</td>
+<td>AMD's platform table lists 80.5 PFLOPS where 8 × 5.03 = 40.3</td>
+<td>per-GPU figures</td>
+</tr>
+<tr>
+<td>GH200 HBM3e</td>
+<td>144 GB / 4.9 TB/s (NVIDIA) vs 141 / 4.8 (secondary, likely conflated with H200)</td>
+<td><strong>144 GB / 4.9 TB/s</strong></td>
+</tr>
+<tr>
+<td>TPU v2 peak</td>
+<td>46 BF16 TFLOP/s (ISCA 2021) vs 45 or 43 in marketing</td>
+<td><strong>46</strong></td>
+</tr>
+<tr>
+<td>TPU v4 power</td>
+<td>Paper: 121 W min / 170 mean / 192 max, idle 90; Cloud docs list 90 as minimum</td>
+<td>paper values</td>
+</tr>
+<tr>
+<td>GB300 NVL72 price</td>
+<td>$3.7–4.0M (Loop Capital) vs $6.0–6.5M (Tom's Hardware supply chain)</td>
+<td>$3.7M, flagged</td>
+</tr>
+<tr>
+<td>TPU 2026 volume</td>
+<td>2.7M (SemiAnalysis, Aug 2026, revised down) to 4.6M (BofA)</td>
+<td><strong>2.7M</strong>, flagged</td>
+</tr>
+<tr>
+<td>Ascend 910C specs</td>
+<td>Huawei's own paper v1 gives throughput; v2 deleted it and v3 renamed the part</td>
+<td>v1, pinned</td>
+</tr>
+<tr>
+<td>MTIA 450/500 compute</td>
+<td>Published FP8 figures contradict Meta's own 25× scaling claim</td>
+<td>unresolved, flagged</td>
+</tr>
+<tr>
+<td>TPU 8i pod compute</td>
+<td>Reported 331.8 EFLOPS does not reconcile with chip count or the stated multiple</td>
+<td>unresolved, flagged</td>
+</tr>
+<tr>
+<td>Cerebras "125 PFLOPS"</td>
+<td>Sparse FP16 with unstructured sparsity; no dense equivalent published</td>
+<td>not compared to dense</td>
+</tr>
+<tr>
+<td>MFU expectations</td>
+<td>Lambda's own whitepaper says 35–45%; a third party reads Lambda's benchmarks as 60–68%</td>
+<td><strong>35–50%</strong> for dense pretraining</td>
+</tr>
+<tr>
+<td>Colossus GPU count</td>
+<td>200,000 (x.ai) vs ~230,000 itemised vs "&gt;220,000" (Anthropic lease) vs 276k H100-equivalents (Epoch)</td>
+<td>all cited, by convention</td>
+</tr>
+</tbody>
+</table>
+<h3 id="123-things-nobody-has-published">12.3 Things nobody has published</h3>
+<p>Stated explicitly, because their absence shapes every comparison:</p>
+<ul>
+<li><strong>B200/B300 official SM, CUDA core and Tensor Core counts.</strong> NVIDIA stopped publishing these for datacenter parts.</li>
+<li><strong>B300 L2 size and die size. Rubin's CUDA core count, die size, L2 size, TDP and price.</strong> Rubin's process node comes only from third parties.</li>
+<li><strong>Per-chip TDP, clock speed and process node for every TPU after v4.</strong> Google's ~1 kW Ironwood figure here is inferred from pod power.</li>
+<li><strong>Any Ironwood MLPerf result.</strong> None exists.</li>
+<li><strong>Trainium3 public pricing.</strong> Capacity Blocks and enterprise agreements only.</li>
+<li><strong>AMD's dense-versus-sparse labelling for MI455X</strong>, and its process node.</li>
+<li><strong>H20's SM count, transistor count and die configuration.</strong> No NVIDIA datasheet exists.</li>
+<li><strong>Per-part cost of goods from any vendor.</strong> Every BOM figure in §10.1 is modelled.</li>
+<li><strong>HBM revenue by supplier.</strong> No share figure is verifiable.</li>
+<li><strong>Gemini 1.5/2.5/3 training compute; Nemotron total FLOPs.</strong> Not disclosed.</li>
+<li><strong>The percentage of step time spent in communication at frontier scale.</strong> No lab publishes it; §4.4's figures are derived.</li>
+</ul>
+<h3 id="124-primary-sources">12.4 Primary sources</h3>
+<p><strong>Architecture.</strong> NVIDIA Volta, Ampere, Hopper, Ada and RTX Blackwell architecture whitepapers; NVIDIA Blackwell, Blackwell Ultra and GH200 datasheets; NVIDIA Rubin architecture blog; Chips and Cheese B200 microarchitectural analysis; Jouppi et al., <em>In-Datacenter Performance Analysis of a TPU</em> (ISCA 2017), <em>Ten Lessons From Three Generations Shaped Google's TPUv4i</em> (ISCA 2021), and <em>TPU v4: An Optically Reconfigurable Supercomputer</em> (ISCA 2023); Google Cloud TPU architecture documentation; Ironwood Hot Chips 2025 deck; Google Cloud eighth-generation TPU deep dive; AMD MI350/MI355X product briefs and Helios launch materials; Intel Gaudi 3 whitepaper and Hot Chips 2024 deck; AWS Neuron architecture documentation; Meta MTIA ISCA 2025 paper; Microsoft Maia 100 Hot Chips 2024 deck and Maia 200 announcement; Cerebras WSE-3 datasheet; Groq LPU documentation; SambaNova SN40L ISSCC 2025 paper; Tenstorrent Blackhole specifications.</p>
+<p><strong>LLM systems.</strong> Kaplan et al. 2020 (arXiv:2001.08361); Hoffmann et al. 2022 (arXiv:2203.15556); Rajbhandari et al., ZeRO (arXiv:1910.02054); Shoeybi et al., Megatron-LM (arXiv:1909.08053); Narayanan et al. 2021 (arXiv:2104.04473); Korthikanti et al. 2022 (arXiv:2205.05198); Dao et al., FlashAttention (arXiv:2205.14135) and FlashAttention-3 (arXiv:2407.08608); Grattafiori et al., <em>The Llama 3 Herd of Models</em> (arXiv:2407.21783); DeepSeek-V3 technical report (arXiv:2412.19437) and hardware paper (arXiv:2505.09343); Anthony et al., ZAYA1 (arXiv:2511.17127); NVIDIA, <em>Pretraining LLMs with NVFP4</em> (arXiv:2509.25149); OCP Microscaling Formats v1.0; Gemini technical reports (arXiv:2312.11805, arXiv:2403.05530); PaLM (JMLR 24:240); Apple Intelligence Foundation Language Models.</p>
+<p><strong>Benchmarks and market data.</strong> MLCommons MLPerf Training v4.0, v4.1, v5.0, v5.1 and v6.0 result sets and submitter write-ups; Google Cloud TPU pricing page; AWS EC2 Capacity Blocks pricing; CoreWeave, RunPod and Oracle price lists; NVIDIA, Broadcom, Marvell, Micron and Amazon earnings materials; TrendForce CoWoS reporting; Epoch AI training-compute datasets and datacenter directory; SemiAnalysis TPU and TCO analyses; BIS rule text and the January 2026 presidential proclamation.</p>
+<h3 id="125-correcting-this-report">12.5 Correcting this report</h3>
+<p>The datasets are the interface. To change a number, edit the CSV row — the confidence column is required — and re-run <code>python3 scripts/build_site.py --figures</code>. Every table and figure that depends on it updates, so the prose and the plots cannot drift apart. Where a value is disputed, the convention used here is to record the better-sourced value in the CSV and note the conflict in §12.2 rather than silently averaging.</p>
+<footer>
+Generated from <code>data/*.csv</code> by <code>scripts/build_site.py</code>.
+Figures are produced by <code>scripts/fig_diagrams.py</code> and <code>scripts/fig_data.py</code>.
+Every quantitative claim carries a confidence label; see the appendix for conflicts and unknowns.
+</footer>
+</main>
+</div>
+</body>
+</html>
