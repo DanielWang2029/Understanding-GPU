@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Compute Atlas — GPUs, AI compute & data centers</title>
+<style>
+  :root{
+    --bg:#05070d;
+    --bg-panel:#090d16;
+    --bg-raised:#0e1420;
+    --line:#1b2436;
+    --line-soft:#141c2b;
+    --text:#dce5f5;
+    --text-dim:#8494ad;
+    --text-faint:#5b6a83;
+    --accent:#4fc3ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#1d2739;border-radius:9px}
+  ::-webkit-scrollbar-thumb:hover{background:#2a3752}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  #app{display:grid;grid-template-columns:236px minmax(0,1fr) 460px;height:100%}
+  aside{background:var(--bg-panel);display:flex;flex-direction:column;min-height:0}
+  #left{border-right:1px solid var(--line)}
+  #right{border-left:1px solid var(--line)}
+  .pane-scroll{overflow-y:auto;overflow-x:hidden;flex:1;min-height:0}
+
+  /* ---------- left ---------- */
+  .brand{padding:14px 14px 10px;border-bottom:1px solid var(--line-soft)}
+  .back-link{
+    display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;padding:3px 9px;border-radius:20px;
+    border:1px solid var(--line);background:#0b1220;color:var(--text-faint);
+    font-size:10px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none
+  }
+  .back-link:hover{color:var(--accent);border-color:#2f4a6d}
+  .brand h1{margin:0;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+  .brand p{margin:3px 0 0;font-size:11px;color:var(--text-faint)}
+  .search-wrap{padding:10px 12px;border-bottom:1px solid var(--line-soft)}
+  input[type=search]{
+    width:100%;padding:7px 9px;border-radius:6px;border:1px solid var(--line);
+    background:#070b12;color:var(--text);font-size:12px;outline:none
+  }
+  input[type=search]:focus{border-color:#2f4a6d}
+  .sec-title{
+    padding:12px 14px 6px;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--text-faint)
+  }
+  .legend{padding:2px 8px 10px;border-bottom:1px solid var(--line-soft)}
+  .legend-row{
+    display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;user-select:none
+  }
+  .legend-row:hover{background:#111827}
+  .legend-row.off{opacity:.34}
+  .swatch{width:9px;height:9px;border-radius:50%;flex:none}
+  .legend-row span.n{margin-left:auto;color:var(--text-faint);font-size:11px;font-variant-numeric:tabular-nums}
+  .node-group{padding:2px 8px 8px}
+  .conn-box{padding:0 10px 12px;border-bottom:1px solid var(--line-soft);background:#0a1018}
+  .conn-head{
+    display:flex;align-items:baseline;gap:6px;padding:12px 4px 8px;
+    font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--text-faint)
+  }
+  .conn-head b{color:var(--text);letter-spacing:.02em;text-transform:none;font-size:12px}
+  .link-btn{
+    margin-left:auto;background:none;border:0;color:#4e6480;font:inherit;font-size:10px;
+    letter-spacing:.08em;cursor:pointer;padding:0
+  }
+  .link-btn:hover{color:var(--accent)}
+  .node-btn{
+    width:100%;display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;
+    background:none;border:0;color:var(--text-dim);font:inherit;font-size:12px;text-align:left;cursor:pointer
+  }
+  .node-btn:hover{background:#111827;color:var(--text)}
+  .node-btn.active{background:#152033;color:#fff}
+  .node-btn .cnt{margin-left:auto;font-size:10px;color:var(--text-faint);font-variant-numeric:tabular-nums}
+  .foot{padding:10px 12px;border-top:1px solid var(--line-soft);display:flex;gap:6px;flex-wrap:wrap}
+  .mini-btn{
+    background:#101827;border:1px solid var(--line);color:var(--text-dim);border-radius:6px;
+    padding:5px 8px;font-size:11px;cursor:pointer
+  }
+  .mini-btn:hover{border-color:#2f4a6d;color:var(--text)}
+
+  /* ---------- stage ---------- */
+  #stage{position:relative;min-width:0;overflow:hidden;background:
+     radial-gradient(1200px 800px at 50% 45%, #0a1220 0%, #05070d 62%)}
+  canvas{display:block;width:100%;height:100%;cursor:grab}
+  canvas.dragging{cursor:grabbing}
+  .hud{position:absolute;pointer-events:none;color:var(--text-faint);font-size:11px}
+  #hud-top{top:12px;left:16px;line-height:1.7}
+  #hud-top b{color:var(--text-dim);font-weight:600}
+  #hud-bottom{bottom:12px;left:16px}
+  #hud-right{bottom:12px;right:16px;text-align:right}
+  .kbd{border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--text-dim)}
+  #stage-controls{position:absolute;top:10px;right:12px;display:flex;gap:6px}
+  .seg{display:flex;background:#0a1018;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .seg button{
+    background:none;border:0;color:var(--text-faint);font:inherit;font-size:11px;letter-spacing:.05em;
+    padding:5px 12px;cursor:pointer
+  }
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button:hover{color:var(--text)}
+  .seg button.on{background:#16233a;color:#fff}
+  #banner{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:12px;
+    font-size:10.5px;color:#5b6a83;background:rgba(8,12,20,.7);border:1px solid var(--line-soft);
+    padding:3px 9px;border-radius:20px;pointer-events:none;letter-spacing:.03em
+  }
+
+  /* ---------- right ---------- */
+  .detail-head{padding:14px 16px 12px;border-bottom:1px solid var(--line-soft)}
+  .detail-head h2{margin:0;font-size:19px;letter-spacing:-.01em}
+  .badge{
+    display:inline-block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    padding:2px 7px;border-radius:20px;border:1px solid;margin-top:8px
+  }
+  .summary{margin:10px 0 0;color:var(--text-dim);font-size:12.5px}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:8px;overflow:hidden;margin-top:12px}
+  .metrics div{background:var(--bg-raised);padding:7px 9px}
+  .metrics k{display:block;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+  .metrics v{display:block;font-size:12px;color:var(--text)}
+  .block{padding:14px 16px;border-bottom:1px solid var(--line-soft)}
+  .block > h3{
+    margin:0 0 10px;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--text-faint);
+    display:flex;align-items:center;gap:8px
+  }
+  .block > h3 em{font-style:normal;color:#3f4c62;margin-left:auto;font-size:10px}
+  .chart{margin-bottom:14px}
+  .chart:last-child{margin-bottom:0}
+  .chart-head{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+  .chart-head .lbl{font-size:11.5px;color:var(--text-dim)}
+  .chart-head .val{margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums}
+  .chart-head .chg{font-size:11px;font-variant-numeric:tabular-nums}
+  .up{color:#3fe0a0}.down{color:#ff6b7d}
+  .chart canvas{width:100%;height:84px;display:block}
+  .chart .axis{display:flex;justify-content:space-between;font-size:9.5px;color:#465469;margin-top:2px}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;
+    border:1px solid var(--line);background:#0b1220;color:var(--text-dim);font-size:11px;cursor:pointer
+  }
+  .chip:hover{color:#fff;border-color:#2f4a6d}
+  .chip .dot{width:6px;height:6px;border-radius:50%}
+  .rel-group{margin-bottom:9px}
+  .rel-group:last-child{margin-bottom:0}
+  .rel-label{font-size:10.5px;color:#4e5c73;margin-bottom:4px;font-style:italic}
+  .kind-filter{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+  .kind-filter button{
+    background:#0b1220;border:1px solid var(--line);color:var(--text-faint);border-radius:20px;
+    padding:2px 9px;font-size:10.5px;cursor:pointer;letter-spacing:.04em
+  }
+  .kind-filter button.on{color:var(--text);border-color:#33506f;background:#122033}
+  .item{padding:10px 8px;margin:0 -8px;border-bottom:1px solid var(--line-soft);cursor:pointer;border-radius:6px}
+  .item:last-child{border-bottom:0}
+  .item:hover{background:#0d1421}
+  .item.open{background:#0c1320;border-bottom-color:transparent;box-shadow:inset 0 0 0 1px var(--line-soft)}
+  .item-text.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .item-body{margin-top:8px;border-top:1px solid var(--line-soft);padding-top:8px}
+  .item-body p{margin:0 0 8px;font-size:12.5px;color:#b9c8de}
+  .item-body p:last-child{margin-bottom:0}
+  .more{
+    display:inline-block;margin-top:6px;font-size:10.5px;letter-spacing:.06em;color:#5f83ad
+  }
+  .item:hover .more{color:var(--accent)}
+  .src-link{display:inline-block;margin-top:8px;font-size:11px;color:var(--accent);text-decoration:none}
+  .src-link:hover{text-decoration:underline}
+  .item-meta{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--text-faint);margin-bottom:3px}
+  .kind{padding:1px 6px;border-radius:4px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+  .k-tweet{background:#12283d;color:#67c2ff}
+  .k-news{background:#20263d;color:#9aa6ff}
+  .k-filing{background:#2a2436;color:#c79bff}
+  .k-data{background:#12312a;color:#4fe0a5}
+  .k-note{background:#33291a;color:#ffb648}
+  .item-title{font-size:12.5px;color:var(--text);margin:0 0 2px;font-weight:600}
+  .item-text{margin:0;font-size:12px;color:var(--text-dim)}
+  .item-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .tag{
+    font-size:10px;padding:1px 6px;border-radius:4px;background:#0d1421;border:1px solid var(--line-soft);
+    color:var(--text-faint);cursor:pointer
+  }
+  .tag:hover{color:#fff}
+  .empty{color:var(--text-faint);font-size:12px;font-style:italic}
+  .stat-row{display:flex;gap:14px;flex-wrap:wrap}
+  .stat{min-width:64px}
+  .stat b{display:block;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .stat span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+
+  @media (max-width:1180px){
+    #app{grid-template-columns:200px minmax(0,1fr) 390px}
+  }
+  @media (max-width:900px){
+    #app{grid-template-columns:1fr;grid-template-rows:minmax(280px,45%) 1fr}
+    #left{display:none}
+    #right{border-left:0;border-top:1px solid var(--line)}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="left">
+    <div class="brand">
+      <a class="back-link" href="project-overview.html" title="Back to the project overview">← Overview</a>
+      <h1 id="brand-title">Compute Atlas</h1>
+      <p id="brand-sub">GPUs · AI compute · data centers</p>
+    </div>
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Search labels…  ( / )" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="pane-scroll" id="node-list"></div>
+    <div class="foot">
+      <button class="mini-btn" id="btn-reset">Reset view</button>
+      <button class="mini-btn" id="btn-spin">Pause spin</button>
+      <button class="mini-btn" id="btn-load">Load JSON…</button>
+      <input type="file" id="file" accept=".json,application/json" hidden />
+    </div>
+  </aside>
+
+  <main id="stage">
+    <canvas id="globe"></canvas>
+    <div id="stage-controls">
+      <div class="seg" id="mode-switch">
+        <button data-mode="globe" class="on">Globe</button>
+        <button data-mode="clusters">Clusters</button>
+      </div>
+    </div>
+    <div class="hud" id="hud-top"></div>
+    <div class="hud" id="hud-bottom"></div>
+    <div class="hud" id="hud-right"></div>
+    <div id="banner"></div>
+  </main>
+
+  <aside id="right">
+    <div id="detail-head-slot"></div>
+    <div class="pane-scroll" id="detail"></div>
+  </aside>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ======================================================================
+   math: vectors + quaternions ([x,y,z,w])
+   ====================================================================== */
+const clamp = (v,a,b)=> v<a?a:v>b?b:v;
+const norm = v => { const l=Math.hypot(v[0],v[1],v[2])||1; return [v[0]/l,v[1]/l,v[2]/l]; };
+const dot  = (a,b)=> a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross= (a,b)=> [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+
+function qAxis(ax, ang){
+  const h = ang/2, s = Math.sin(h), a = norm(ax);
+  return [a[0]*s, a[1]*s, a[2]*s, Math.cos(h)];
+}
+function qmul(a,b){
+  const ax=a[0],ay=a[1],az=a[2],aw=a[3], bx=b[0],by=b[1],bz=b[2],bw=b[3];
+  return [
+    aw*bx + ax*bw + ay*bz - az*by,
+    aw*by - ax*bz + ay*bw + az*bx,
+    aw*bz + ax*by - ay*bx + az*bw,
+    aw*bw - ax*bx - ay*by - az*bz
+  ];
+}
+function qnorm(q){ const l=Math.hypot(q[0],q[1],q[2],q[3])||1; return [q[0]/l,q[1]/l,q[2]/l,q[3]/l]; }
+function qrot(q,v){
+  const x=q[0],y=q[1],z=q[2],w=q[3], vx=v[0],vy=v[1],vz=v[2];
+  const tx=2*(y*vz - z*vy), ty=2*(z*vx - x*vz), tz=2*(x*vy - y*vx);
+  return [vx + w*tx + (y*tz - z*ty), vy + w*ty + (z*tx - x*tz), vz + w*tz + (x*ty - y*tx)];
+}
+function qslerp(a,b,t){
+  let d = a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3];
+  let bb = b;
+  if (d < 0){ bb = [-b[0],-b[1],-b[2],-b[3]]; d = -d; }
+  if (d > 0.9995) return qnorm([a[0]+(bb[0]-a[0])*t, a[1]+(bb[1]-a[1])*t, a[2]+(bb[2]-a[2])*t, a[3]+(bb[3]-a[3])*t]);
+  const th = Math.acos(clamp(d,-1,1)), s = Math.sin(th);
+  const w1 = Math.sin((1-t)*th)/s, w2 = Math.sin(t*th)/s;
+  return qnorm([a[0]*w1+bb[0]*w2, a[1]*w1+bb[1]*w2, a[2]*w1+bb[2]*w2, a[3]*w1+bb[3]*w2]);
+}
+/* great-circle interpolation between two unit vectors */
+function slerpVec(a,b,t){
+  const d = clamp(dot(a,b),-1,1), th = Math.acos(d);
+  if (th < 1e-5) return a.slice();
+  const s = Math.sin(th), w1 = Math.sin((1-t)*th)/s, w2 = Math.sin(t*th)/s;
+  return [a[0]*w1+b[0]*w2, a[1]*w1+b[1]*w2, a[2]*w1+b[2]*w2];
+}
+const hexA = (hex,a)=>{
+  const h = hex.replace('#','');
+  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+};
+
+/* ======================================================================
+   model
+   ====================================================================== */
+let DATA, nodes, nodeById, adj, edges, itemsByTag, typeKeys;
+
+function buildModel(raw){
+  DATA = raw;
+  typeKeys = Object.keys(DATA.types);
+  nodes = DATA.nodes.map((n,i)=>({
+    ...n,
+    weight: n.weight || 4,
+    idx: i,
+    p: [0,0,1],   // unit position on the sphere
+    v: [0,0,1],   // rotated (view space)
+    sx: 0, sy: 0, front: false, r: 4
+  }));
+  nodeById = new Map(nodes.map(n=>[n.id,n]));
+
+  edges = [];
+  adj = new Map(nodes.map(n=>[n.id, []]));
+  (DATA.edges||[]).forEach(e=>{
+    const [s,t,rel] = Array.isArray(e) ? e : [e.s, e.t, e.rel];
+    const a = nodeById.get(s), b = nodeById.get(t);
+    if (!a || !b || a===b) return;
+    const edge = { a, b, rel: rel || "related" };
+    edges.push(edge);
+    adj.get(s).push({ other: b, rel: edge.rel });
+    adj.get(t).push({ other: a, rel: edge.rel });
+  });
+
+  itemsByTag = new Map(nodes.map(n=>[n.id, []]));
+  (DATA.items||[]).forEach((it,i)=>{
+    it._i = i;
+    (it.tags||[]).forEach(tag=>{ if (itemsByTag.has(tag)) itemsByTag.get(tag).push(it); });
+  });
+  itemsByTag.forEach(list => list.sort((x,y)=> (y.date||"").localeCompare(x.date||"")));
+  (DATA.items||[]).sort((x,y)=> (y.date||"").localeCompare(x.date||""));
+
+  layout();
+}
+
+const typeColor = t => (DATA.types[t] && DATA.types[t].color) || "#8fa3bf";
+const typeLabel = t => (DATA.types[t] && DATA.types[t].label) || t;
+
+/* Deterministic spherical force layout: fibonacci seed, then repulsion
+   between every pair plus attraction along edges, all kept on the sphere. */
+function layout(){
+  const n = nodes.length, GA = Math.PI*(3-Math.sqrt(5));
+  nodes.forEach((nd,i)=>{
+    const y = 1 - (i+0.5)*(2/n);
+    const r = Math.sqrt(Math.max(0,1-y*y));
+    const phi = i*GA;
+    nd.p = norm([Math.cos(phi)*r, y, Math.sin(phi)*r]);
+  });
+
+  const iters = 420, REP = 0.020, ATT = 0.42;
+  const f = nodes.map(()=>[0,0,0]);
+  for (let it=0; it<iters; it++){
+    const step = 0.075*(1 - it/iters) + 0.004;
+    for (let i=0;i<n;i++){ f[i][0]=0; f[i][1]=0; f[i][2]=0; }
+
+    for (let i=0;i<n;i++){
+      for (let j=i+1;j<n;j++){
+        const pi = nodes[i].p, pj = nodes[j].p;
+        const d = clamp(dot(pi,pj),-1,1);
+        const ang = Math.acos(d) + 1e-4;
+        const mag = REP / (ang*ang + 0.06);
+        const ti = norm([pi[0]-pj[0]*d, pi[1]-pj[1]*d, pi[2]-pj[2]*d]);
+        f[i][0]+=ti[0]*mag; f[i][1]+=ti[1]*mag; f[i][2]+=ti[2]*mag;
+        f[j][0]-=ti[0]*mag; f[j][1]-=ti[1]*mag; f[j][2]-=ti[2]*mag;
+      }
+    }
+    edges.forEach(e=>{
+      const i = e.a.idx, j = e.b.idx, pi = e.a.p, pj = e.b.p;
+      const d = clamp(dot(pi,pj),-1,1);
+      const ang = Math.acos(d);
+      if (ang < 0.18) return;
+      const mag = ATT * ang;
+      const ti = norm([pj[0]-pi[0]*d, pj[1]-pi[1]*d, pj[2]-pi[2]*d]);
+      f[i][0]+=ti[0]*mag; f[i][1]+=ti[1]*mag; f[i][2]+=ti[2]*mag;
+      f[j][0]-=ti[0]*mag; f[j][1]-=ti[1]*mag; f[j][2]-=ti[2]*mag;
+    });
+
+    for (let i=0;i<n;i++){
+      const p = nodes[i].p;
+      nodes[i].p = norm([p[0]+f[i][0]*step, p[1]+f[i][1]*step, p[2]+f[i][2]*step]);
+    }
+  }
+}
+
+/* ======================================================================
+   view state
+   ====================================================================== */
+const view = {
+  mode: "globe",             // globe | clusters
+  rot: qAxis([0,1,0], 0),
+  zoom: 1,
+  pan: { x:0, y:0 },         // clusters view only
+  autoSpin: true,
+  selected: null,
+  hover: null,
+  query: "",
+  expanded: new Set(),       // feed entries opened to full content
+  hiddenTypes: new Set(),
+  kinds: new Set(),          // empty = all kinds
+  anim: null                 // {from,to,t0,dur}
+};
+
+const canvas = document.getElementById('globe');
+const ctx = canvas.getContext('2d');
+let W=0, H=0, DPR=1, CX=0, CY=0, R=260;
+
+function resize(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = Math.max(1, rect.width); H = Math.max(1, rect.height);
+  canvas.width = Math.round(W*DPR); canvas.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  CX = W/2; CY = H/2;
+  R = Math.min(W,H)*0.40*view.zoom;
+  CL.dirty = true;
+}
+window.addEventListener('resize', resize);
+
+const isVisibleType = n => !view.hiddenTypes.has(n.type);
+function matchesQuery(n){
+  const q = view.query.trim().toLowerCase();
+  return q ? (n.name.toLowerCase().includes(q) || n.id.includes(q) || typeLabel(n.type).toLowerCase().includes(q)) : false;
+}
+function neighborsOf(id){
+  const set = new Set();
+  (adj.get(id)||[]).forEach(l => set.add(l.other.id));
+  return set;
+}
+
+/* ======================================================================
+   render
+   ====================================================================== */
+function project(){
+  R = Math.min(W,H)*0.40*view.zoom;
+  nodes.forEach(n=>{
+    const v = qrot(view.rot, n.p);
+    n.v = v;
+    n.sx = CX + v[0]*R;
+    n.sy = CY - v[1]*R;
+    n.front = v[2] > 0;
+    n.r = (2.4 + n.weight*0.62) * (0.85 + 0.15*view.zoom);
+  });
+}
+
+function drawSphere(){
+  const g = ctx.createRadialGradient(CX-R*0.35, CY-R*0.4, R*0.1, CX, CY, R*1.05);
+  g.addColorStop(0, "#0e1a2c");
+  g.addColorStop(0.55, "#080e18");
+  g.addColorStop(1, "#04060b");
+  ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2);
+  ctx.strokeStyle = "rgba(79,195,255,.16)"; ctx.lineWidth = 1; ctx.stroke();
+}
+
+function graticule(){
+  const front = [], back = [];
+  const push = (arr, pts) => arr.push(pts);
+  const line = (gen)=>{
+    let run = null, runFront = null;
+    gen((p)=>{
+      const v = qrot(view.rot, p);
+      const f = v[2] > 0;
+      const s = [CX+v[0]*R, CY-v[1]*R];
+      if (run && f === runFront){ run.push(s); }
+      else {
+        if (run && run.length>1) push(runFront?front:back, run);
+        run = [s]; runFront = f;
+      }
+    });
+    if (run && run.length>1) push(runFront?front:back, run);
+  };
+
+  for (let lat=-75; lat<=75; lat+=15){
+    const la = lat*Math.PI/180, cy = Math.sin(la), cr = Math.cos(la);
+    line(emit=>{ for (let lon=0; lon<=360; lon+=5){ const lo=lon*Math.PI/180;
+      emit([cr*Math.cos(lo), cy, cr*Math.sin(lo)]); } });
+  }
+  for (let lon=0; lon<180; lon+=15){
+    const lo = lon*Math.PI/180;
+    line(emit=>{ for (let lat=-90; lat<=90; lat+=5){ const la=lat*Math.PI/180, cr=Math.cos(la);
+      emit([cr*Math.cos(lo), Math.sin(la), cr*Math.sin(lo)]); } });
+  }
+
+  const stroke = (paths, style)=>{
+    ctx.beginPath();
+    paths.forEach(p=>{ ctx.moveTo(p[0][0],p[0][1]); for (let i=1;i<p.length;i++) ctx.lineTo(p[i][0],p[i][1]); });
+    ctx.strokeStyle = style; ctx.lineWidth = 1; ctx.stroke();
+  };
+  stroke(back,  "rgba(90,140,200,.055)");
+  stroke(front, "rgba(110,165,225,.13)");
+}
+
+function arcPoints(a, b, segs){
+  const pts = [];
+  for (let i=0;i<=segs;i++){
+    const t = i/segs;
+    const p = slerpVec(a.p, b.p, t);
+    const lift = 1 + 0.055*Math.sin(Math.PI*t);
+    const v = qrot(view.rot, [p[0]*lift, p[1]*lift, p[2]*lift]);
+    pts.push(v);
+  }
+  return pts;
+}
+
+function splitEdges(){
+  const sel = view.selected;
+  const plain = [], hot = [];
+  edges.forEach(e=>{
+    if (!isVisibleType(e.a) || !isVisibleType(e.b)) return;
+    ((sel && (e.a.id===sel || e.b.id===sel)) ? hot : plain).push(e);
+  });
+  return { plain, hot };
+}
+
+function drawEdgesPlain(){
+  const sel = view.selected;
+  const plain = splitEdges().plain;
+
+  const strokeBatch = (list, style, width, wantFront)=>{
+    ctx.beginPath();
+    list.forEach(e=>{
+      const pts = arcPoints(e.a, e.b, 22);
+      let started = false;
+      for (let i=0;i<pts.length;i++){
+        const v = pts[i], f = v[2] > 0;
+        if (f !== wantFront){ started = false; continue; }
+        const x = CX+v[0]*R, y = CY-v[1]*R;
+        if (!started){ ctx.moveTo(x,y); started = true; } else ctx.lineTo(x,y);
+      }
+    });
+    ctx.strokeStyle = style; ctx.lineWidth = width; ctx.stroke();
+  };
+
+  const faded = sel ? 0.055 : 0.20;
+  strokeBatch(plain, `rgba(120,170,220,${faded*0.35})`, 1, false);
+  strokeBatch(plain, `rgba(130,185,240,${faded})`, 1, true);
+}
+
+function drawEdgesHot(now){
+  const sel = view.selected;
+  splitEdges().hot.forEach(e=>{
+    const other = e.a.id===sel ? e.b : e.a;
+    const col = typeColor(other.type);
+    const pts = arcPoints(e.a, e.b, 40);
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = hexA(col, 0.85);
+    ctx.shadowColor = hexA(col, 0.6); ctx.shadowBlur = 8;
+    let started = false;
+    for (let i=0;i<pts.length;i++){
+      const v = pts[i];
+      if (v[2] <= 0){ if (started){ ctx.stroke(); started=false; } continue; }
+      const x = CX+v[0]*R, y = CY-v[1]*R;
+      if (!started){ ctx.beginPath(); ctx.moveTo(x,y); started = true; } else ctx.lineTo(x,y);
+    }
+    if (started) ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // travelling pulse, source -> target
+    const dir = e.a.id===sel ? 1 : -1;
+    let t = ((now*0.00022) + (e.a.idx*0.13 + e.b.idx*0.07)) % 1;
+    if (dir < 0) t = 1 - t;
+    const pv = pts[Math.floor(t*(pts.length-1))];
+    if (pv && pv[2] > 0){
+      ctx.beginPath();
+      ctx.arc(CX+pv[0]*R, CY-pv[1]*R, 2.1, 0, Math.PI*2);
+      ctx.fillStyle = hexA(col, 0.95); ctx.fill();
+    }
+  });
+}
+
+function drawBackNodes(){
+  nodes.forEach(n=>{
+    if (n.front || !isVisibleType(n)) return;
+    ctx.beginPath(); ctx.arc(n.sx, n.sy, Math.max(1, n.r*0.42), 0, Math.PI*2);
+    ctx.fillStyle = hexA(typeColor(n.type), 0.12); ctx.fill();
+  });
+}
+
+/* pass: 'dim' draws only the faded labels, 'active' the selection and its
+   neighbours, so highlighted arcs can be laid down in between. */
+function drawNodes(now, pass){
+  const sel = view.selected;
+  const nb = sel ? neighborsOf(sel) : null;
+  const pulse = 0.5 + 0.5*Math.sin(now*0.003);
+  const active = n => !sel || n.id === sel || (nb && nb.has(n.id));
+
+  nodes.forEach(n=>{
+    if (!n.front || !isVisibleType(n)) return;
+    if (pass === 'dim' ? active(n) : !active(n)) return;
+    const col = typeColor(n.type);
+    const isSel = sel === n.id;
+    const isNb  = nb && nb.has(n.id);
+    const isHov = view.hover === n.id;
+    const hit   = view.query && matchesQuery(n);
+    let a = 1;
+    if (sel && !isSel && !isNb) a = 0.20;
+    if (view.query && !hit && !isSel) a = Math.min(a, 0.18);
+    const depth = 0.55 + 0.45*n.v[2];
+
+    if (isSel || isHov || hit){
+      ctx.beginPath(); ctx.arc(n.sx, n.sy, n.r + 6 + pulse*3, 0, Math.PI*2);
+      ctx.fillStyle = hexA(col, 0.10); ctx.fill();
+    }
+    if (isSel || isNb || isHov){
+      ctx.shadowColor = hexA(col, 0.9); ctx.shadowBlur = isSel ? 16 : 9;
+    }
+    ctx.beginPath(); ctx.arc(n.sx, n.sy, n.r, 0, Math.PI*2);
+    ctx.fillStyle = hexA(col, a*depth);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath(); ctx.arc(n.sx, n.sy, n.r, 0, Math.PI*2);
+    ctx.strokeStyle = hexA("#ffffff", a*(isSel?0.9:isNb?0.35:0.14)); ctx.lineWidth = isSel?1.6:1;
+    ctx.stroke();
+
+    if (isSel){
+      ctx.beginPath(); ctx.arc(n.sx, n.sy, n.r + 9 + pulse*4, 0, Math.PI*2);
+      ctx.strokeStyle = hexA(col, 0.45 - pulse*0.25); ctx.lineWidth = 1; ctx.stroke();
+    }
+  });
+}
+
+function drawLabels(){
+  const sel = view.selected;
+  const nb = sel ? neighborsOf(sel) : null;
+  const taken = [];
+  const overlaps = (r)=> taken.some(t => !(r.x2 < t.x || r.x > t.x2 || r.y2 < t.y || r.y > t.y2));
+
+  const cands = nodes.filter(n=> n.front && isVisibleType(n) && n.v[2] > 0.12).map(n=>{
+    let prio = 0;
+    if (sel === n.id) prio = 5;
+    else if (view.hover === n.id) prio = 4;
+    else if (nb && nb.has(n.id)) prio = 3;
+    else if (view.query && matchesQuery(n)) prio = 3;
+    else if (!sel && !view.query) prio = n.weight >= 7 ? 2 : (n.weight >= 5 ? 1 : 0.5);
+    return { n, prio };
+  }).filter(c=> c.prio > 0)
+    .sort((a,b)=> b.prio - a.prio || b.n.v[2] - a.n.v[2]);
+
+  cands.forEach(({n, prio})=>{
+    const col = typeColor(n.type);
+    const size = prio >= 4 ? 13 : prio >= 3 ? 12 : 11;
+    ctx.font = `${prio>=3?600:500} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+    const w = ctx.measureText(n.name).width;
+    const y = n.sy + 4;
+    const box = x => ({ x: x-3, y: y-size, x2: x+w+4, y2: y+4 });
+
+    let x = n.sx + n.r + 6, rect = box(x);
+    if (overlaps(rect)){                       // try the other side before giving up
+      const xl = n.sx - n.r - 6 - w, rl = box(xl);
+      if (!overlaps(rl)){ x = xl; rect = rl; }
+      else if (prio < 5) return;
+    }
+    taken.push(rect);
+
+    ctx.fillStyle = "rgba(5,8,14,.68)";
+    ctx.fillRect(rect.x, rect.y, rect.x2-rect.x, rect.y2-rect.y);
+    const alpha = prio >= 3 ? 1 : (sel || view.query) ? 0.25 : 0.72;
+    ctx.fillStyle = prio >= 3 ? hexA(col, alpha) : hexA("#cfe0f5", alpha);
+    ctx.fillText(n.name, x, y);
+  });
+}
+
+/* ======================================================================
+   clusters view — every label visible, grouped into category cards
+   ====================================================================== */
+const CL = { cards: [], w: 1, h: 1, scale: 1, ox: 0, oy: 0, dirty: true };
+const LABEL_FONT = '500 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif';
+
+function roundRect(c, x, y, w, h, r){
+  c.beginPath();
+  if (c.roundRect) c.roundRect(x, y, w, h, r);
+  else {
+    c.moveTo(x+r, y); c.arcTo(x+w, y, x+w, y+h, r); c.arcTo(x+w, y+h, x, y+h, r);
+    c.arcTo(x, y+h, x, y, r); c.arcTo(x, y, x+w, y, r); c.closePath();
+  }
+}
+
+/* Biggest category becomes a wide banner across the top; the rest sit in a row
+   of roughly square cards beneath it. */
+function computeClusterLayout(){
+  const ROW = 21, HEAD = 30, PADX = 13, PADY = 10, CARD_GAP = 16, COL_GAP = 12;
+  ctx.font = LABEL_FONT;
+
+  const groups = typeKeys
+    .filter(t=> !view.hiddenTypes.has(t))
+    .map(t=>({ type: t, list: nodes.filter(n=> n.type===t)
+                                   .sort((a,b)=> b.weight-a.weight || a.name.localeCompare(b.name)) }))
+    .filter(g=> g.list.length);
+
+  CL.cards = [];
+  if (!groups.length){ CL.w = CL.h = 1; CL.dirty = false; return; }
+  groups.forEach(g=> g.list.forEach(n=> n.labelW = ctx.measureText(n.name).width));
+
+  const build = (g, cols, forceW)=>{
+    const rows = Math.ceil(g.list.length / cols);
+    const colW = [];
+    for (let c=0;c<cols;c++){
+      let wide = 0;
+      for (let r=0;r<rows;r++){ const nd = g.list[c*rows+r]; if (nd) wide = Math.max(wide, nd.labelW); }
+      colW.push(Math.max(92, wide + 24));
+    }
+    let w = PADX*2 + colW.reduce((a,b)=>a+b,0) + COL_GAP*(cols-1);
+    if (forceW > w){ const extra = (forceW - w)/cols; colW.forEach((_,i)=> colW[i] += extra); w = forceW; }
+    return { type: g.type, list: g.list, count: g.list.length, cols, rows, colW,
+             w, h: HEAD + PADY*2 + rows*ROW, x: 0, y: 0 };
+  };
+
+  const place = (card, x, y)=>{
+    card.x = x; card.y = y;
+    let colX = x + PADX;
+    for (let c=0;c<card.cols;c++){
+      for (let r=0;r<card.rows;r++){
+        const nd = card.list[c*card.rows+r];
+        if (!nd) continue;
+        nd.cx = colX + 7;
+        nd.cy = y + HEAD + PADY + r*ROW + ROW/2;
+      }
+      colX += card.colW[c] + COL_GAP;
+    }
+  };
+
+  let bi = 0;
+  groups.forEach((g,i)=>{ if (g.list.length > groups[bi].list.length) bi = i; });
+  const bannerGroup = groups[bi];
+  const rest = groups.filter((_,i)=> i !== bi);
+
+  const bottom = rest.map(g=>{                 // column count closest to a square card
+    let best = null;
+    for (let c=1; c<=Math.min(g.list.length, 6); c++){
+      const card = build(g, c);
+      const score = Math.abs(card.w/card.h - 1);
+      if (!best || score < best.score) best = { card, score };
+    }
+    return best.card;
+  });
+  const bottomW = bottom.reduce((a,c)=> a + c.w, 0) + CARD_GAP*Math.max(0, bottom.length-1);
+  if (bottom.length){
+    const tallest = Math.max(...bottom.map(c=> c.h));
+    bottom.forEach(c=> c.h = tallest);
+  }
+
+  let cols = 1;                                // banner spreads to match the row below
+  for (let c=1; c<=bannerGroup.list.length; c++){
+    const trial = build(bannerGroup, c);
+    if (c === 1 || trial.w <= bottomW) cols = c; else break;
+  }
+  const banner = build(bannerGroup, cols, bottomW);
+
+  CL.w = Math.max(banner.w, bottomW);
+  place(banner, (CL.w - banner.w)/2, 0);
+  let x = (CL.w - bottomW)/2;
+  const y = banner.h + CARD_GAP;
+  bottom.forEach(c=>{ place(c, x, y); x += c.w + CARD_GAP; });
+
+  CL.cards = [banner, ...bottom];
+  CL.h = banner.h + (bottom.length ? CARD_GAP + bottom[0].h : 0);
+  CL.dirty = false;
+}
+
+function projectClusters(){
+  if (CL.dirty) computeClusterLayout();
+  const fit = Math.min((W-56)/CL.w, (H-72)/CL.h, 1.25);
+  CL.scale = Math.max(0.25, fit) * view.zoom;
+  CL.ox = (W - CL.w*CL.scale)/2 + view.pan.x;
+  CL.oy = (H - CL.h*CL.scale)/2 + view.pan.y;
+  nodes.forEach(n=>{
+    n.sx = CL.ox + n.cx*CL.scale;
+    n.sy = CL.oy + n.cy*CL.scale;
+    n.front = true;
+  });
+}
+
+function bow(a, b){                       // control point for the arc between two labels
+  const dx = b.cx-a.cx, dy = b.cy-a.cy, len = Math.hypot(dx,dy) || 1;
+  const k = Math.min(90, len*0.17);
+  return [ (a.cx+b.cx)/2 - dy/len*k, (a.cy+b.cy)/2 + dx/len*k ];
+}
+const qPoint = (a, c, b, t)=>{
+  const u = 1-t;
+  return [u*u*a.cx + 2*u*t*c[0] + t*t*b.cx, u*u*a.cy + 2*u*t*c[1] + t*t*b.cy];
+};
+
+function drawClusters(now){
+  const sel = view.selected, nb = sel ? neighborsOf(sel) : null;
+  const pulse = 0.5 + 0.5*Math.sin(now*0.003);
+  const s = CL.scale;
+
+  ctx.save();
+  ctx.translate(CL.ox, CL.oy);
+  ctx.scale(s, s);
+
+  CL.cards.forEach(c=>{
+    const col = typeColor(c.type);
+    roundRect(ctx, c.x, c.y, c.w, c.h, 11);
+    ctx.fillStyle = "rgba(9,14,23,.72)"; ctx.fill();
+    ctx.strokeStyle = hexA(col, 0.20); ctx.lineWidth = 1/s; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(c.x+14, c.y+18, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = hexA(col, 0.9); ctx.fill();
+    ctx.font = '600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif';
+    ctx.fillStyle = hexA(col, 0.85);
+    ctx.fillText(typeLabel(c.type).toUpperCase(), c.x+24, c.y+22);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = "rgba(140,160,190,.45)";
+    ctx.fillText(String(c.count), c.x+c.w-13, c.y+22);
+    ctx.textAlign = 'left';
+  });
+
+  const plain = [], hot = [];
+  edges.forEach(e=>{
+    if (!isVisibleType(e.a) || !isVisibleType(e.b)) return;
+    (sel && (e.a.id===sel || e.b.id===sel) ? hot : plain).push(e);
+  });
+
+  ctx.beginPath();
+  plain.forEach(e=>{
+    const c = bow(e.a, e.b);
+    ctx.moveTo(e.a.cx, e.a.cy);
+    ctx.quadraticCurveTo(c[0], c[1], e.b.cx, e.b.cy);
+  });
+  ctx.strokeStyle = `rgba(125,170,220,${sel ? 0.05 : 0.13})`;
+  ctx.lineWidth = 1/s; ctx.stroke();
+
+  const isActive = n => !sel || n.id === sel || (nb && nb.has(n.id));
+  if (sel) paintClusterNodes(n=> !isActive(n), pulse, s);   // dimmed rows go under the arcs
+
+  hot.forEach(e=>{
+    const other = e.a.id===sel ? e.b : e.a;
+    const col = typeColor(other.type);
+    const c = bow(e.a, e.b);
+    ctx.beginPath();
+    ctx.moveTo(e.a.cx, e.a.cy);
+    ctx.quadraticCurveTo(c[0], c[1], e.b.cx, e.b.cy);
+    ctx.strokeStyle = hexA(col, 0.8); ctx.lineWidth = 1.5/s;
+    ctx.shadowColor = hexA(col, 0.55); ctx.shadowBlur = 7;
+    ctx.stroke(); ctx.shadowBlur = 0;
+
+    let t = ((now*0.00022) + (e.a.idx*0.13 + e.b.idx*0.07)) % 1;
+    if (e.a.id !== sel) t = 1 - t;
+    const p = qPoint(e.a, c, e.b, t);
+    ctx.beginPath(); ctx.arc(p[0], p[1], 2.2/s*Math.max(s,0.8), 0, Math.PI*2);
+    ctx.fillStyle = hexA(col, 0.95); ctx.fill();
+  });
+
+  paintClusterNodes(isActive, pulse, s);      // highlighted rows sit on top of the arcs
+
+  ctx.restore();
+}
+
+function paintClusterNodes(filter, pulse, s){
+  const sel = view.selected, nb = sel ? neighborsOf(sel) : null;
+  nodes.forEach(n=>{
+    if (!isVisibleType(n) || !filter(n)) return;
+    const col = typeColor(n.type);
+    const isSel = sel === n.id, isNb = nb && nb.has(n.id), isHov = view.hover === n.id;
+    const hit = view.query && matchesQuery(n);
+    let a = 1;
+    if (sel && !isSel && !isNb) a = 0.22;
+    if (view.query && !hit && !isSel) a = Math.min(a, 0.20);
+    const r = 3 + n.weight*0.30;
+
+    ctx.fillStyle = "rgba(10,15,24,.86)";     // keep rows readable where arcs cross them
+    ctx.fillRect(n.cx-8, n.cy-9, (n.labelW||40)+19, 18);
+
+    if (isSel || isHov || hit){
+      ctx.beginPath(); ctx.arc(n.cx, n.cy, r + 5 + pulse*3, 0, Math.PI*2);
+      ctx.fillStyle = hexA(col, 0.13); ctx.fill();
+    }
+    if (isSel || isNb || isHov){ ctx.shadowColor = hexA(col, 0.9); ctx.shadowBlur = isSel ? 14 : 7; }
+    ctx.beginPath(); ctx.arc(n.cx, n.cy, r, 0, Math.PI*2);
+    ctx.fillStyle = hexA(col, a); ctx.fill();
+    ctx.shadowBlur = 0;
+    if (isSel){
+      ctx.beginPath(); ctx.arc(n.cx, n.cy, r + 5 + pulse*3, 0, Math.PI*2);
+      ctx.strokeStyle = hexA(col, 0.5); ctx.lineWidth = 1/s; ctx.stroke();
+    }
+
+    ctx.font = `${isSel?700:isNb?600:500} 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif`;
+    ctx.fillStyle = isSel ? "#ffffff" : isNb ? hexA(col, 0.95) : hexA("#cfe0f5", a*0.82);
+    ctx.fillText(n.name, n.cx + 9, n.cy + 4);
+  });
+}
+
+function frame(now){
+  if (view.mode === 'clusters'){
+    ctx.clearRect(0,0,W,H);
+    projectClusters();
+    drawClusters(now);
+    requestAnimationFrame(frame);
+    return;
+  }
+  if (view.anim){
+    const a = view.anim;
+    let t = (now - a.t0) / a.dur;
+    if (t >= 1){ t = 1; view.rot = a.to; view.anim = null; }
+    else {
+      const e = t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+      view.rot = qslerp(a.from, a.to, e);
+    }
+  } else if (view.autoSpin && !view.selected && !drag.active){
+    view.rot = qnorm(qmul(view.rot, qAxis([0,1,0], 0.0016)));
+  }
+
+  ctx.clearRect(0,0,W,H);
+  project();
+  drawSphere();
+  graticule();
+  drawBackNodes();
+  drawEdgesPlain();
+  drawNodes(now, 'dim');
+  drawEdgesHot(now);
+  drawNodes(now, 'active');
+  drawLabels();
+  requestAnimationFrame(frame);
+}
+
+/* ======================================================================
+   interaction
+   ====================================================================== */
+const drag = { active:false, moved:0, x:0, y:0 };
+
+canvas.addEventListener('pointerdown', e=>{
+  drag.active = true; drag.moved = 0; drag.x = e.clientX; drag.y = e.clientY;
+  canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging');
+});
+canvas.addEventListener('pointermove', e=>{
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+  if (drag.active){
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.x = e.clientX; drag.y = e.clientY;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    if (view.mode === 'clusters'){
+      view.pan.x += dx; view.pan.y += dy;
+      return;
+    }
+    const k = 0.0052 / view.zoom;
+    view.anim = null;
+    let q = qmul(qAxis([0,1,0], dx*k), view.rot);
+    q = qmul(qAxis([1,0,0], dy*k), q);
+    view.rot = qnorm(q);
+    return;
+  }
+  const hit = pick(mx,my);
+  const id = hit ? hit.id : null;
+  if (id !== view.hover){ view.hover = id; canvas.style.cursor = id ? 'pointer' : 'grab'; }
+});
+const endDrag = e=>{
+  if (!drag.active) return;
+  drag.active = false; canvas.classList.remove('dragging');
+  if (drag.moved < 5){
+    const rect = canvas.getBoundingClientRect();
+    const hit = pick(e.clientX-rect.left, e.clientY-rect.top);
+    select(hit ? hit.id : null);
+  }
+};
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', ()=>{ drag.active=false; canvas.classList.remove('dragging'); });
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  view.zoom = clamp(view.zoom * Math.exp(-e.deltaY*0.0012), 0.62, 3.2);
+}, {passive:false});
+
+function pick(mx,my){
+  if (view.mode === 'clusters'){
+    const lx = (mx - CL.ox)/CL.scale, ly = (my - CL.oy)/CL.scale;
+    let best = null;
+    nodes.forEach(n=>{                      // row-shaped target: dot plus its label
+      if (!isVisibleType(n)) return;
+      if (lx > n.cx-9 && lx < n.cx + 12 + (n.labelW||40) && Math.abs(ly - n.cy) < 10) best = n;
+    });
+    return best;
+  }
+  let best = null, bestD = Infinity;
+  nodes.forEach(n=>{
+    if (!n.front || !isVisibleType(n)) return;
+    const d = Math.hypot(n.sx-mx, n.sy-my);
+    const rad = Math.max(11, n.r+7);
+    if (d < rad && d < bestD){ bestD = d; best = n; }
+  });
+  return best;
+}
+
+function centerOn(node){
+  const v = norm(qrot(view.rot, node.p));
+  const target = [0,0,1];
+  const axis = cross(v, target);
+  const len = Math.hypot(axis[0],axis[1],axis[2]);
+  const align = len < 1e-6
+    ? (dot(v,target) > 0 ? [0,0,0,1] : qAxis([0,1,0], Math.PI))
+    : qAxis(axis, Math.acos(clamp(dot(v,target),-1,1)));
+  const to = qnorm(qmul(align, view.rot));
+  view.anim = { from: view.rot, to, t0: performance.now(), dur: 850 };
+}
+
+function select(id){
+  view.selected = id;
+  const n = id ? nodeById.get(id) : null;
+  if (n && view.mode === 'globe') centerOn(n);
+  renderDetail();
+  renderNodeList();
+  renderHud();
+}
+
+function setMode(mode){
+  if (mode === view.mode) return;
+  view.mode = mode;
+  view.zoom = 1; view.pan.x = 0; view.pan.y = 0; view.anim = null;
+  CL.dirty = true;
+  canvas.style.cursor = 'grab';
+  [...document.querySelectorAll('#mode-switch button')]
+    .forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+  spinBtn.disabled = mode !== 'globe';
+  spinBtn.style.opacity = mode === 'globe' ? '' : '.4';
+  renderHints();
+  if (mode === 'globe' && view.selected) centerOn(nodeById.get(view.selected));
+}
+
+function renderHints(){
+  document.getElementById('hud-bottom').innerHTML = view.mode === 'globe'
+    ? '<span class="kbd">drag</span> rotate &nbsp;·&nbsp; <span class="kbd">scroll</span> zoom &nbsp;·&nbsp; <span class="kbd">click</span> center a label &nbsp;·&nbsp; <span class="kbd">v</span> switch view &nbsp;·&nbsp; <span class="kbd">esc</span> clear'
+    : '<span class="kbd">drag</span> pan &nbsp;·&nbsp; <span class="kbd">scroll</span> zoom &nbsp;·&nbsp; <span class="kbd">click</span> highlight a label &nbsp;·&nbsp; <span class="kbd">v</span> switch view &nbsp;·&nbsp; <span class="kbd">esc</span> clear';
+}
+
+/* ======================================================================
+   charts
+   ====================================================================== */
+function monthLabel(start, i){
+  const [y,m] = start.split('-').map(Number);
+  const t = (m-1) + i;
+  return `${y + Math.floor(t/12)}-${String((t%12)+1).padStart(2,'0')}`;
+}
+function drawChart(cv, s, color){
+  const dpr = Math.min(window.devicePixelRatio||1,2);
+  const w = cv.clientWidth || 320, h = 84;
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  const c = cv.getContext('2d');
+  c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,w,h);
+
+  const vals = s.values;
+  const nums = vals.filter(v=> v!=null);
+  if (!nums.length) return;
+  let lo = Math.min(...nums), hi = Math.max(...nums);
+  if (hi === lo){ hi += 1; lo -= 1; }
+  const pad = (hi-lo)*0.12; lo -= pad; hi += pad;
+  const X = i => (i/(vals.length-1))*(w-2)+1;
+  const Y = v => h - 6 - ((v-lo)/(hi-lo))*(h-14);
+
+  c.strokeStyle = "rgba(120,150,190,.10)"; c.lineWidth = 1;
+  for (let g=0; g<=2; g++){
+    const y = 6 + g*((h-12)/2);
+    c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke();
+  }
+
+  // area
+  let started = false;
+  c.beginPath();
+  vals.forEach((v,i)=>{ if (v==null) return;
+    if (!started){ c.moveTo(X(i), Y(v)); started = true; } else c.lineTo(X(i), Y(v)); });
+  const lastIdx = vals.reduce((acc,v,i)=> v!=null?i:acc, 0);
+  const firstIdx = vals.findIndex(v=> v!=null);
+  c.lineTo(X(lastIdx), h); c.lineTo(X(firstIdx), h); c.closePath();
+  const g2 = c.createLinearGradient(0,0,0,h);
+  g2.addColorStop(0, hexA(color,.28)); g2.addColorStop(1, hexA(color,0));
+  c.fillStyle = g2; c.fill();
+
+  started = false; c.beginPath();
+  vals.forEach((v,i)=>{ if (v==null) return;
+    if (!started){ c.moveTo(X(i), Y(v)); started = true; } else c.lineTo(X(i), Y(v)); });
+  c.strokeStyle = color; c.lineWidth = 1.6; c.stroke();
+
+  c.beginPath(); c.arc(X(lastIdx), Y(vals[lastIdx]), 2.6, 0, Math.PI*2);
+  c.fillStyle = color; c.fill();
+}
+function chartBlock(seriesId, color){
+  const s = DATA.series && DATA.series[seriesId];
+  if (!s) return null;
+  const vals = s.values, li = vals.reduce((a,v,i)=> v!=null?i:a, 0), fi = vals.findIndex(v=>v!=null);
+  const last = vals[li], first = vals[fi];
+  const chg = first ? ((last-first)/Math.abs(first))*100 : 0;
+  const wrap = document.createElement('div');
+  wrap.className = 'chart';
+  wrap.innerHTML = `
+    <div class="chart-head">
+      <span class="lbl">${esc(s.label)}</span>
+      <span class="val">${s.unit === '$' ? '$' : ''}${fmt(last)}${s.unit && s.unit !== '$' ? ' ' + esc(s.unit) : ''}</span>
+      <span class="chg ${chg>=0?'up':'down'}">${chg>=0?'+':''}${chg.toFixed(1)}%</span>
+    </div>
+    <canvas></canvas>
+    <div class="axis"><span>${monthLabel(s.start, fi)}</span><span>${monthLabel(s.start, li)}</span></div>`;
+  requestAnimationFrame(()=> drawChart(wrap.querySelector('canvas'), s, color));
+  return wrap;
+}
+const fmt = v => Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : v.toFixed(2);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ======================================================================
+   panels
+   ====================================================================== */
+const elLegend  = document.getElementById('legend');
+const elList    = document.getElementById('node-list');
+const elDetail  = document.getElementById('detail');
+const elHead    = document.getElementById('detail-head-slot');
+const elHudTop  = document.getElementById('hud-top');
+const elHudRight= document.getElementById('hud-right');
+
+function renderLegend(){
+  elLegend.innerHTML = '';
+  typeKeys.forEach(t=>{
+    const count = nodes.filter(n=>n.type===t).length;
+    const row = document.createElement('div');
+    row.className = 'legend-row' + (view.hiddenTypes.has(t) ? ' off' : '');
+    row.innerHTML = `<i class="swatch" style="background:${typeColor(t)}"></i>${esc(typeLabel(t))}<span class="n">${count}</span>`;
+    row.title = 'Show / hide this category';
+    row.onclick = ()=>{
+      view.hiddenTypes.has(t) ? view.hiddenTypes.delete(t) : view.hiddenTypes.add(t);
+      if (view.selected && view.hiddenTypes.has(nodeById.get(view.selected).type)) select(null);
+      CL.dirty = true;
+      renderLegend(); renderNodeList();
+    };
+    elLegend.appendChild(row);
+  });
+}
+
+function connectionsBox(id){
+  const n = nodeById.get(id);
+  const links = (adj.get(id)||[]).filter(l=> isVisibleType(l.other));
+  const box = document.createElement('div');
+  box.className = 'conn-box';
+  const head = document.createElement('div');
+  head.className = 'conn-head';
+  head.innerHTML = `Connected to <b>${esc(n.name)}</b>`;
+  const clear = document.createElement('button');
+  clear.className = 'link-btn'; clear.textContent = 'clear';
+  clear.onclick = ()=> select(null);
+  head.appendChild(clear);
+  box.appendChild(head);
+
+  if (!links.length){
+    const e = document.createElement('div'); e.className='empty'; e.textContent='No relations recorded.';
+    box.appendChild(e); return box;
+  }
+  const byRel = new Map();
+  links.forEach(l=>{ if (!byRel.has(l.rel)) byRel.set(l.rel, []); byRel.get(l.rel).push(l.other); });
+  [...byRel.entries()].forEach(([r, list])=>{
+    const g = document.createElement('div'); g.className='rel-group';
+    g.innerHTML = `<div class="rel-label">${esc(r)}</div>`;
+    const chips = document.createElement('div'); chips.className='chips';
+    list.sort((a,b)=>b.weight-a.weight).forEach(o=>{
+      const c = document.createElement('button');
+      c.className = 'chip';
+      c.innerHTML = `<i class="dot" style="background:${typeColor(o.type)}"></i>${esc(o.name)}`;
+      c.onclick = ()=> select(o.id);
+      c.onmouseenter = ()=> view.hover = o.id;
+      c.onmouseleave = ()=> { if (view.hover===o.id) view.hover=null; };
+      chips.appendChild(c);
+    });
+    g.appendChild(chips); box.appendChild(g);
+  });
+  return box;
+}
+
+function renderNodeList(){
+  elList.innerHTML = '';
+  const q = view.query.trim().toLowerCase();
+  if (view.selected && nodeById.has(view.selected)) elList.appendChild(connectionsBox(view.selected));
+  let listed = 0;
+  typeKeys.forEach(t=>{
+    if (view.hiddenTypes.has(t)) return;
+    const group = nodes.filter(n=> n.type===t && (!q || matchesQuery(n)))
+                       .sort((a,b)=> b.weight-a.weight || a.name.localeCompare(b.name));
+    if (!group.length) return;
+    listed += group.length;
+    const title = document.createElement('div');
+    title.className = 'sec-title'; title.textContent = typeLabel(t);
+    elList.appendChild(title);
+    const box = document.createElement('div'); box.className = 'node-group';
+    group.forEach(n=>{
+      const b = document.createElement('button');
+      b.className = 'node-btn' + (view.selected===n.id ? ' active' : '');
+      b.innerHTML = `<i class="swatch" style="background:${typeColor(n.type)}"></i>${esc(n.name)}<span class="cnt">${(itemsByTag.get(n.id)||[]).length||''}</span>`;
+      b.onclick = ()=> select(n.id);
+      b.onmouseenter = ()=> view.hover = n.id;
+      b.onmouseleave = ()=> { if (view.hover===n.id) view.hover = null; };
+      box.appendChild(b);
+    });
+    elList.appendChild(box);
+  });
+  if (!listed){
+    const e = document.createElement('div');
+    e.className = 'block';
+    e.innerHTML = '<span class="empty">No labels match.</span>';
+    elList.appendChild(e);
+  }
+}
+
+function kindFilterBar(onChange){
+  const kinds = [...new Set((DATA.items||[]).map(i=>i.kind))];
+  const bar = document.createElement('div');
+  bar.className = 'kind-filter';
+  const mk = (key, label)=>{
+    const b = document.createElement('button');
+    const on = key==='all' ? view.kinds.size===0 : view.kinds.has(key);
+    b.className = on ? 'on' : ''; b.textContent = label;
+    b.onclick = ()=>{
+      if (key==='all') view.kinds.clear();
+      else view.kinds.has(key) ? view.kinds.delete(key) : view.kinds.add(key);
+      onChange();
+    };
+    return b;
+  };
+  bar.appendChild(mk('all','all'));
+  kinds.forEach(k=> bar.appendChild(mk(k,k)));
+  return bar;
+}
+
+function itemEl(it){
+  const open = view.expanded.has(it._i);
+  const d = document.createElement('div');
+  d.className = 'item' + (open ? ' open' : '');
+  const tags = (it.tags||[]).filter(t=>nodeById.has(t))
+    .map(t=>`<span class="tag" data-id="${t}" style="border-color:${hexA(typeColor(nodeById.get(t).type),.45)}">${esc(nodeById.get(t).name)}</span>`).join('');
+  const body = (it.body||'').trim();
+  const hasMore = !!body;
+  d.innerHTML = `
+    <div class="item-meta">
+      <span class="kind k-${esc(it.kind||'note')}">${esc(it.kind||'note')}</span>
+      <span>${esc(it.source||'')}</span>
+      <span style="margin-left:auto">${esc(it.date||'')}</span>
+    </div>
+    ${it.title ? `<p class="item-title">${esc(it.title)}</p>` : ''}
+    <p class="item-text${open ? '' : ' clamp'}">${esc(it.text||'')}</p>
+    ${open && body ? `<div class="item-body">${body.split(/\n\s*\n/).map(p=>`<p>${esc(p.trim())}</p>`).join('')}</div>` : ''}
+    ${open && it.url ? `<a class="src-link" href="${esc(it.url)}" target="_blank" rel="noopener">open source ↗</a>` : ''}
+    <div class="item-tags">${tags}</div>
+    <span class="more">${open ? '− collapse' : (hasMore ? '+ read full entry' : '+ expand')}</span>`;
+  d.querySelectorAll('.tag').forEach(el=> el.onclick = e=>{ e.stopPropagation(); select(el.dataset.id); });
+  d.onclick = e=>{
+    if (e.target.closest('a')) return;
+    open ? view.expanded.delete(it._i) : view.expanded.add(it._i);
+    d.replaceWith(itemEl(it));          // swap in place so panel scroll and charts survive
+  };
+  return d;
+}
+
+function feedBlock(items, heading){
+  const filtered = view.kinds.size ? items.filter(i=> view.kinds.has(i.kind)) : items;
+  const block = document.createElement('div');
+  block.className = 'block';
+  block.innerHTML = `<h3>${esc(heading)}<em>${filtered.length} item${filtered.length===1?'':'s'}</em></h3>`;
+  block.appendChild(kindFilterBar(()=> renderDetail()));
+  if (!filtered.length){
+    const p = document.createElement('div'); p.className='empty'; p.textContent='No entries for this filter.';
+    block.appendChild(p);
+  } else {
+    filtered.slice(0,120).forEach(it=> block.appendChild(itemEl(it)));
+  }
+  return block;
+}
+
+function renderDetail(){
+  elHead.innerHTML = ''; elDetail.innerHTML = '';
+  const id = view.selected;
+
+  if (!id){
+    const head = document.createElement('div');
+    head.className = 'detail-head';
+    head.innerHTML = `<h2>Overview</h2>
+      <p class="summary">Click any label on the sphere to bring it to center, light up its relations and filter the feed.</p>`;
+    elHead.appendChild(head);
+
+    const stats = document.createElement('div');
+    stats.className = 'block';
+    stats.innerHTML = `<h3>Atlas</h3>
+      <div class="stat-row">
+        <div class="stat"><b>${nodes.length}</b><span>labels</span></div>
+        <div class="stat"><b>${edges.length}</b><span>relations</span></div>
+        <div class="stat"><b>${(DATA.items||[]).length}</b><span>entries</span></div>
+        <div class="stat"><b>${Object.keys(DATA.series||{}).length}</b><span>series</span></div>
+      </div>`;
+    elDetail.appendChild(stats);
+
+    const tr = document.createElement('div');
+    tr.className = 'block';
+    tr.innerHTML = `<h3>Price &amp; rate trends</h3>`;
+    Object.keys(DATA.series||{}).forEach((k,i)=>{
+      const c = chartBlock(k, ["#4fc3ff","#ffb648","#b085ff","#ff6fb5","#3fe0a0","#7dd3fc","#fca5a5"][i%7]);
+      if (c) tr.appendChild(c);
+    });
+    elDetail.appendChild(tr);
+    elDetail.appendChild(feedBlock(DATA.items||[], 'Latest across all labels'));
+    return;
+  }
+
+  const n = nodeById.get(id);
+  const col = typeColor(n.type);
+  const head = document.createElement('div');
+  head.className = 'detail-head';
+  head.innerHTML = `
+    <h2>${esc(n.name)}</h2>
+    <span class="badge" style="color:${col};border-color:${hexA(col,.45)};background:${hexA(col,.08)}">${esc(typeLabel(n.type))}</span>
+    ${n.summary ? `<p class="summary">${esc(n.summary)}</p>` : ''}
+    ${n.metrics && n.metrics.length ? `<div class="metrics">${n.metrics.map(m=>`<div><k>${esc(m[0])}</k><v>${esc(m[1])}</v></div>`).join('')}</div>` : ''}`;
+  elHead.appendChild(head);
+
+  const series = (n.series||[]).filter(s=> DATA.series && DATA.series[s]);
+  if (series.length){
+    const b = document.createElement('div'); b.className='block';
+    b.innerHTML = `<h3>Trends</h3>`;
+    series.forEach(s=>{ const c = chartBlock(s, col); if (c) b.appendChild(c); });
+    elDetail.appendChild(b);
+  }
+
+  elDetail.appendChild(feedBlock(itemsByTag.get(id)||[], `Tagged “${n.name}”`));
+}
+
+function renderHud(){
+  const n = view.selected ? nodeById.get(view.selected) : null;
+  elHudTop.innerHTML = n
+    ? `<b style="color:${typeColor(n.type)}">${esc(n.name)}</b><br>${esc(typeLabel(n.type))} · ${(adj.get(n.id)||[]).length} relations · ${(itemsByTag.get(n.id)||[]).length} entries`
+    : `<b>${esc(DATA.meta.title||'Compute Atlas')}</b><br>${nodes.length} labels · ${edges.length} relations`;
+  elHudRight.textContent = DATA.meta && DATA.meta.updated ? 'updated ' + DATA.meta.updated : '';
+}
+
+/* ======================================================================
+   controls
+   ====================================================================== */
+const searchEl = document.getElementById('search');
+searchEl.addEventListener('input', ()=>{ view.query = searchEl.value; renderNodeList(); });
+searchEl.addEventListener('keydown', e=>{
+  if (e.key === 'Enter'){
+    const first = nodes.filter(n=> isVisibleType(n) && matchesQuery(n)).sort((a,b)=>b.weight-a.weight)[0];
+    if (first) select(first.id);
+  }
+  if (e.key === 'Escape'){ searchEl.value=''; view.query=''; renderNodeList(); searchEl.blur(); }
+});
+document.addEventListener('keydown', e=>{
+  if (e.key === '/' && document.activeElement !== searchEl){ e.preventDefault(); searchEl.focus(); }
+  if ((e.key === 'v' || e.key === 'V') && document.activeElement !== searchEl){
+    setMode(view.mode === 'globe' ? 'clusters' : 'globe');
+  }
+  if (e.key === 'Escape'){ select(null); }
+});
+document.querySelectorAll('#mode-switch button').forEach(b=>{
+  b.onclick = ()=> setMode(b.dataset.mode);
+});
+document.getElementById('btn-reset').onclick = ()=>{
+  view.zoom = 1; view.pan.x = 0; view.pan.y = 0;
+  view.anim = { from: view.rot, to: qAxis([0,1,0],0), t0: performance.now(), dur: 700 };
+  select(null);
+};
+const spinBtn = document.getElementById('btn-spin');
+spinBtn.onclick = ()=>{
+  view.autoSpin = !view.autoSpin;
+  spinBtn.textContent = view.autoSpin ? 'Pause spin' : 'Resume spin';
+};
+const fileEl = document.getElementById('file');
+document.getElementById('btn-load').onclick = ()=> fileEl.click();
+fileEl.onchange = ()=>{
+  const f = fileEl.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try {
+      const json = JSON.parse(rd.result);
+      boot(json);
+    } catch(err){ alert('Could not parse that JSON:\n' + err.message); }
+  };
+  rd.readAsText(f);
+};
+
+/* ======================================================================
+   boot
+   ====================================================================== */
+function boot(raw){
+  buildModel(raw);
+  view.selected = null; view.hover = null; view.kinds.clear(); view.hiddenTypes.clear();
+  document.getElementById('brand-title').textContent = raw.meta && raw.meta.title || 'Compute Atlas';
+  document.getElementById('brand-sub').textContent = raw.meta && raw.meta.subtitle || '';
+  document.getElementById('banner').textContent = (raw.meta && raw.meta.note) || '';
+  document.title = (raw.meta && raw.meta.title || 'Compute Atlas');
+  CL.dirty = true;
+  renderLegend(); renderNodeList(); renderDetail(); renderHud(); renderHints();
+}
+
+resize();
+boot(window.ATLAS_DATA);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
