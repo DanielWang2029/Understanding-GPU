@@ -30,6 +30,13 @@ body {
   background: var(--panel); border-right: 1px solid var(--line);
   padding: 18px 18px 28px; display: flex; flex-direction: column; gap: 14px;
 }
+.cross-link {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px;
+  padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border);
+  background: #101a26; color: var(--muted); text-decoration: none;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+}
+.cross-link:hover { color: var(--accent); border-color: #3a6fa0; }
 #sidebar header h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: -0.01em; }
 #sidebar .sub { margin: 0; color: var(--muted); font-size: 12.5px; }
 .panel {

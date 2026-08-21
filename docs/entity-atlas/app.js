@@ -54,8 +54,9 @@ function renderTopStats() {
     [fmt(st.sources), "sources"],
     [fmt(st.recognitions), "recognitions"],
   ].map(([v, k]) => `<div><b>${v}</b>${k}</div>`).join("");
+  // echoes the label on the compute map's link here, so the two pages read as a pair
   $("#brand-sub").textContent =
-    `${st.sources} sources · ${st.entities} entities · built ${ATLAS.raw.generated_at}`;
+    `information grid and search · ${st.sources} sources · ${st.entities} entities`;
 }
 
 function setTab(tab, { push = true } = {}) {
