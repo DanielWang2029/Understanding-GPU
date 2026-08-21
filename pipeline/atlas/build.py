@@ -246,10 +246,13 @@ def ui_bundle(entities: list[dict], relations: list[dict], docs: list[dict],
             "name": e["name"], "weight": e["weight"], "summary": e["summary"],
             "aliases": e["aliases"][:6],
             "params": {k: v for k, v in e["params"].items() if v not in (None, "", [], {})},
-            "provenance": e["provenance"],
+            # the page reads units from param_spec and does not link to records, so
+            # the bundle carries only what it renders; the registry keeps the rest
+            "provenance": {p: {k: v for k, v in prov.items()
+                               if k in ("source", "confidence", "as_of", "note")}
+                           for p, prov in e["provenance"].items()},
             "conflicts": e["conflicts"],
             "metrics": headline_metrics(e),
-            "documents": e["documents"],
             "document_count": e["document_count"],
             "record_count": e["record_count"],
             "relations": e["relations"],
@@ -264,7 +267,8 @@ def ui_bundle(entities: list[dict], relations: list[dict], docs: list[dict],
     keep = {e["id"] for e in ui_entities}
     doc_out = []
     for d in docs:
-        doc_out.append({**d, "entities": [x for x in d["entities"] if x["entity"] in keep]})
+        doc_out.append({**{k: v for k, v in d.items() if k != "records"},
+                        "entities": [x for x in d["entities"] if x["entity"] in keep]})
 
     by_type = Counter(e["type"] for e in ui_entities)
     return {
