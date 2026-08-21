@@ -11,9 +11,13 @@ Two things live here:
 
 **→ Open the map: [`docs/compute-map/index.html`](docs/compute-map/index.html)** ([how it works](docs/compute-map/README.md))
 
-**3. An entity atlas** — the entity-relation grid behind both, plus a search over every source URL showing how each one was recognised as being about which companies, accelerators and data centers.
+**3. An entity atlas** — the entity-relation grid behind both, a catalogue of every data source with real example records, and a search over every cited document showing how each one was recognised as being about which companies, accelerators and data centers.
 
 **→ Open the atlas: [`docs/entity-atlas/index.html`](docs/entity-atlas/index.html)** ([how it works](docs/entity-atlas/README.md))
+
+**4. A standardised data pipeline** — 15 catalogued sources produce 3,606 dated records, which fill the typed parameters of 843 entities, each parameter naming the record and source behind it. Adding, changing or removing a data source is a catalog entry plus an adapter function.
+
+**→ Read the design: [`docs/DATA-PIPELINE.md`](docs/DATA-PIPELINE.md)**
 
 Everything is generated from the datasets in [`data/`](data/), so any number can be traced, corrected and re-plotted.
 
@@ -60,13 +64,16 @@ scripts/tables.py            markdown tables generated from the CSVs
 scripts/build_site.py        assembles report/report.md and docs/index.html
 scripts/geocode_sites.py     geocodes Epoch addresses into a committed cache
 scripts/build_compute_map.py normalises, dedupes and rolls up the map dataset
-scripts/build_entity_atlas.py entity registry, relation derivation, source recognition
+pipeline/atlas/              the source -> record -> entity pipeline (schema, catalog,
+                             adapters, recognition, resolution, filling, validation)
+data/registry/               sources.json, records.json, entities.json, resolution_log.json
 report/sections/             the report source, one markdown file per section
 report/report.md             the assembled single-file report
 report/figures/              24 generated PNGs
 docs/index.html              the report as an HTML site
 docs/compute-map/            the interactive map (D3 + topojson vendored locally)
-docs/entity-atlas/           the entity-relation grid and source search (no dependencies)
+docs/entity-atlas/           the entity grid, data-source catalogue and document search
+docs/DATA-PIPELINE.md        how sources, records and entities are defined and built
 references/                  the uploaded dataCenterView project and UI reference
 ```
 
@@ -78,7 +85,7 @@ python3 scripts/build_site.py --figures      # regenerate every figure, then the
 python3 scripts/build_site.py                # rebuild the report and site only
 python3 scripts/tables.py                    # print the generated tables
 python3 scripts/build_compute_map.py         # rebuild the map dataset from all four sources
-python3 scripts/build_entity_atlas.py       # rebuild the entity atlas from the datasets
+python3 -m pipeline.atlas.build               # rebuild the registry and the atlas bundles
 python3 -m http.server -d docs 8901          # serve the report and the map
 ```
 

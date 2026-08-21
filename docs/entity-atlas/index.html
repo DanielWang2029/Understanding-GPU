@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Entity Atlas — entities, relations and source recognition</title>
-<meta name="description" content="Entity-relation grid and source search over the repository's AI-compute datasets, showing how every source URL is resolved to entities.">
+<title>Entity Atlas — data sources, records and resolved entities</title>
+<meta name="description" content="The catalogued data sources behind the AI-compute datasets, the records they produce, and the entity grid and document search built on top of them.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305070d'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%234fc3ff'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2' fill='%23ffb648'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2' fill='%23b085ff'/%3E%3Crect x='18' y='18' width='8' height='8' rx='2' fill='%233fe0a0'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -18,7 +18,8 @@
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="grid" class="on">Entity grid</button>
-    <button data-tab="search">Source search</button>
+    <button data-tab="sources">Data sources</button>
+    <button data-tab="search">Document search</button>
   </nav>
   <div class="topstats" id="topstats"></div>
 </header>
@@ -53,14 +54,28 @@
   </aside>
 </main>
 
+<!-- ========================== DATA SOURCES TAB ========================== -->
+<main id="tab-sources" class="tab">
+  <aside id="src-left">
+    <div class="pad">
+      <input id="src-filter" type="search" placeholder="Filter sources…  ( / )" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="sec-title">Every data source <span id="src-count" class="v"></span></div>
+    <div class="pane-scroll" id="source-list"></div>
+  </aside>
+  <section id="src-stage">
+    <div class="pane-scroll" id="source-detail"></div>
+  </section>
+</main>
+
 <!-- ============================= SEARCH TAB ============================= -->
 <main id="tab-search" class="tab">
   <div id="search-wrap">
     <div id="search-head">
-      <h2>Search the data sources</h2>
+      <h2>Search the cited documents</h2>
       <p class="muted">Type an entity — a company, accelerator, data center, cloud region or country —
-        and add as many as you like. Every source whose recognised entities match is listed below,
-        and each one opens its own page.</p>
+        and add as many as you like. Every document whose recognised entities match is listed below,
+        and each one opens its own page showing how the recognition happened.</p>
 
       <div id="searchbox">
         <div id="chips"></div>
@@ -86,7 +101,7 @@
 
     <div id="results-head"></div>
     <div id="results"></div>
-    <div id="source-page"></div>
+    <div id="doc-page"></div>
   </div>
 </main>
 

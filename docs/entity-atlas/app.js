@@ -1,11 +1,17 @@
-/* Entity Atlas — two views over one dataset.
+/* Entity Atlas — three views over one registry.
  *
- *   Entity grid   : categories as cards, entities as chips, relations as curves.
- *   Source search : pick entities, list every source that mentions them, and
- *                   open any source on its own page with its recognition trace.
+ *   Entity grid      : categories as cards, entities as chips, relations as
+ *                      curves, and each entity's typed parameters with the
+ *                      source that filled them.
+ *   Data sources     : every catalogued source line by line, and for each one
+ *                      what it fills, what it should not be trusted for, and
+ *                      real example records it produced.
+ *   Document search  : pick entities, list every cited document that mentions
+ *                      them, and open one to see its recognition trace.
  *
- * Both views read window.ATLAS (see data-loader.js). Routing is hash-based so
- * any state is linkable: #grid/<entity>, #search/<entity,entity>, #source/<id>.
+ * All three read window.ATLAS (see data-loader.js). Routing is hash-based so any
+ * state is linkable: #grid/<entity>, #sources/<source>, #search/<entity,entity>,
+ * #doc/<id>.
  */
 
 const S = {
@@ -20,8 +26,10 @@ const S = {
   query: "",
   mode: "any",
   sort: "relevance",
-  kinds: new Set(),             // empty = all source kinds
-  openSource: null,
+  kinds: new Set(),             // empty = all document kinds
+  openDoc: null,
+  openSourceId: null,           // catalogued source shown in the sources tab
+  srcFilter: "",
   cursor: -1,                   // keyboard position in the suggestion list
 };
 
@@ -48,21 +56,25 @@ function typeDot(e, size) { return dot(ATLAS.color(e), size); }
 /* ====================================================================== */
 function renderTopStats() {
   const st = ATLAS.raw.stats;
+  const cat = ATLAS.catalog.stats;
   $("#topstats").innerHTML = [
+    [fmt(cat.sources), "sources"],
+    [fmt(cat.records), "records"],
     [fmt(st.entities), "entities"],
     [fmt(st.relations), "relations"],
-    [fmt(st.sources), "sources"],
-    [fmt(st.recognitions), "recognitions"],
+    [fmt(st.documents), "documents"],
   ].map(([v, k]) => `<div><b>${v}</b>${k}</div>`).join("");
   // echoes the label on the compute map's link here, so the two pages read as a pair
   $("#brand-sub").textContent =
-    `information grid and search · ${st.sources} sources · ${st.entities} entities`;
+    `information grid and search · ${cat.sources} sources · ${fmt(cat.records)} records · ` +
+    `${fmt(st.entities)} entities`;
 }
 
 function setTab(tab, { push = true } = {}) {
   S.tab = tab;
   $$("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   $("#tab-grid").classList.toggle("on", tab === "grid");
+  $("#tab-sources").classList.toggle("on", tab === "sources");
   $("#tab-search").classList.toggle("on", tab === "search");
   if (tab === "grid") requestAnimationFrame(drawWires);
   if (push) writeHash();
@@ -140,7 +152,7 @@ function renderCards() {
 }
 
 function nodeChip(e) {
-  const n = (e.sources || []).length;
+  const n = e.document_count || 0;
   return `<span class="node${e.weight >= 5 ? " big" : ""}" data-id="${e.id}" title="">
     ${typeDot(e)}<span class="nm">${esc(e.name)}</span>${n ? `<span class="ct">${fmt(n)}</span>` : ""}
   </span>`;
@@ -151,7 +163,7 @@ function tipFor(e) {
   const rel = ATLAS.neighbours(e.id, { includeCoMention: true }).length;
   return `<div class="tn">${esc(e.name)}</div>
     <div class="tr">${esc(ATLAS.type(e.type).label)}</div>
-    <div class="tr">${fmt((e.sources || []).length)} sources · ${fmt(rel)} relations</div>
+    <div class="tr">${fmt(e.document_count)} documents · ${fmt(rel)} relations</div>
     ${e.summary ? `<div class="tr" style="margin-top:4px">${esc(e.summary.slice(0, 150))}</div>` : ""}`;
 }
 
@@ -249,7 +261,7 @@ function renderSide() {
             ${list.slice(0, 40).sort((a, b) => b.weight - a.weight)
               .map(o => `<div class="ent-row" data-id="${o.id}">${typeDot(o)}
                  <span class="nm">${esc(o.name)}</span>
-                 <span class="ct">${fmt((o.sources || []).length)}</span></div>`).join("")}
+                 <span class="ct">${fmt(o.document_count)}</span></div>`).join("")}
             ${list.length > 40 ? `<div class="faint" style="padding:2px 6px">+${list.length - 40} more</div>` : ""}
           </div>`).join("")}
       </div>`;
@@ -263,7 +275,7 @@ function renderSide() {
           <span class="v">top ${list.length}</span></div>
         ${list.map(e => `<div class="ent-row" data-id="${e.id}">${typeDot(e)}
            <span class="nm">${esc(e.name)}</span>
-           <span class="ct">${fmt((e.sources || []).length)}</span></div>`).join("")}
+           <span class="ct">${fmt(e.document_count)}</span></div>`).join("")}
       </div>`;
     }).join("");
   }
@@ -280,33 +292,52 @@ function renderEntityDetail() {
   const host = $("#entity-detail");
   if (!S.selected) {
     const st = ATLAS.raw.stats;
+    const cat = ATLAS.catalog.stats;
     host.innerHTML = `
       <div class="dt-head"><h2>How this atlas is built</h2></div>
       <div class="dt-body">
-        <p>Every source URL in the repository's datasets is resolved to entities four ways.
-           Each hit records <em>how</em> it was found, so a source's page shows its working
-           rather than just a list of tags.</p>
+        <p>Three layers, in one direction. ${cat.sources} catalogued
+           <b>sources</b> produce ${fmt(cat.records)} dated <b>records</b>, and those records
+           fill the typed parameters of ${fmt(st.entities)} <b>entities</b>. Every filled
+           parameter names the record and source behind it, so any number here can be
+           walked back to a document.</p>
+        <p class="muted" style="font-size:12px">Open the <b>Data sources</b> tab to see each
+           source, what it fills, what it should not be trusted for, and real records it
+           produced.</p>
+
+        <h3 class="sub">Recognition channels</h3>
         ${Object.entries(ATLAS.raw.methods).map(([m, text]) => `
           <div style="margin-bottom:9px">
             <span class="method" style="margin:0 0 3px">${m}</span>
             <div class="muted" style="font-size:12px">${esc(text)}</div>
           </div>`).join("")}
-        <h3 class="sub">Sources by kind</h3>
+
+        <h3 class="sub">Parameter coverage by type</h3>
+        ${Object.entries(st.coverage || {}).sort((a, b) => b[1] - a[1]).map(([t, pct]) => `
+          <div class="cov">
+            <span class="nm">${dot(ATLAS.color(t), 7)}${esc(ATLAS.type(t).label)}</span>
+            <span class="bar"><i style="width:${pct}%"></i></span>
+            <span class="faint">${pct}%</span>
+          </div>`).join("")}
+
+        <h3 class="sub">Records by confidence</h3>
+        ${Object.entries(cat.by_confidence).sort((a, b) => b[1] - a[1]).map(([k, n]) => `
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+            <span class="conf ${k}">${esc(k)}</span>
+            <span class="muted" style="font-size:12px">${fmt(n)} records</span>
+          </div>`).join("")}
+
+        <h3 class="sub">Documents by kind</h3>
         ${Object.entries(st.by_kind).sort((a, b) => b[1] - a[1]).map(([k, n]) => `
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
             <span class="kind ${k}">${esc(KIND_LABEL[k] || k)}</span>
             <span class="muted" style="font-size:12px">${fmt(n)}</span>
           </div>`).join("")}
-        <h3 class="sub">Sources by dataset</h3>
-        ${Object.entries(st.by_dataset).sort((a, b) => b[1] - a[1]).map(([k, n]) => `
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-            <span>${esc(k)}</span><span class="faint">${fmt(n)}</span>
-          </div>`).join("")}
       </div>`;
     return;
   }
   const e = ATLAS.entities.get(S.selected);
-  const srcs = ATLAS.sourcesFor(e.id).sort((a, b) =>
+  const srcs = ATLAS.documentsFor(e.id).sort((a, b) =>
     (b.date || "").localeCompare(a.date || "") || a.publisher.localeCompare(b.publisher));
   const shown = srcs.slice(0, 25);
   const groups = new Map();
@@ -327,8 +358,11 @@ function renderEntityDetail() {
       ${e.summary ? `<p>${esc(e.summary)}</p>` : ""}
       ${(e.metrics || []).length ? `<div class="metrics">${e.metrics.map(([k, v]) =>
         `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</div>` : ""}
+      ${paramTable(e)}
       ${e.aliases && e.aliases.length ? `<h3 class="sub">Recognised as</h3>
         <div class="tags">${e.aliases.map(a => `<span class="tag">${esc(a)}</span>`).join("")}</div>` : ""}
+      ${(e.merged_from || []).length ? `<h3 class="sub">Names folded into this entity</h3>
+        <div class="tags">${e.merged_from.map(a => `<span class="tag">${esc(a)}</span>`).join("")}</div>` : ""}
 
       <h3 class="sub">Relations <span class="n">${fmt(Array.from(groups.values())
         .reduce((a, b) => a + b.length, 0))}</span></h3>
@@ -340,24 +374,225 @@ function renderEntityDetail() {
             ${list.length > 18 ? `<span class="faint">+${list.length - 18}</span>` : ""}</div>
         </div>`).join("") || `<div class="faint">no relations recorded</div>`}
 
-      <h3 class="sub">Sources mentioning this entity <span class="n">${fmt(srcs.length)}</span></h3>
-      ${shown.map(s => srcCard(s, new Set([e.id]))).join("") || `<div class="faint">none</div>`}
+      <h3 class="sub">Documents mentioning this entity <span class="n">${fmt(srcs.length)}</span></h3>
+      ${shown.map(s => docCard(s, new Set([e.id]))).join("") || `<div class="faint">none</div>`}
       ${srcs.length > shown.length ? `<div class="btn" id="see-all-src">
-        See all ${fmt(srcs.length)} sources in search →</div>` : ""}
+        See all ${fmt(srcs.length)} documents in search →</div>` : ""}
     </div>`;
 
   $$("#entity-detail .pill[data-goto]").forEach(el =>
     el.onclick = () => selectEntity(el.dataset.goto));
+  $$("#entity-detail .prov[data-src]").forEach(el =>
+    el.onclick = () => openSourceEntry(el.dataset.src));
   $$("#entity-detail .src").forEach(el =>
-    el.onclick = () => openSource(el.dataset.sid));
+    el.onclick = () => openDoc(el.dataset.sid));
   const seeAll = $("#see-all-src");
   if (seeAll) seeAll.onclick = () => { S.picked = [e.id]; S.mode = "any"; goSearch(); };
 }
 
+/* The typed default parameters of an entity's type, with what filled each one.
+ * Empty parameters are listed too: "nobody has published this" is a finding. */
+function paramTable(e) {
+  const spec = (ATLAS.raw.param_spec || {})[e.type] || {};
+  const names = Object.keys(spec);
+  if (!names.length) return "";
+  const filled = names.filter(n => e.params[n] !== undefined);
+  const missing = names.filter(n => e.params[n] === undefined);
+  const row = n => {
+    const p = e.provenance[n] || {};
+    const conflicts = (e.conflicts || {})[n] || [];
+    const unit = spec[n].unit && spec[n].unit !== "year" ? ` ${spec[n].unit}` : "";
+    const origin = p.source === "derived"
+      ? `<span class="prov derived" title="${esc(p.note || "computed by the pipeline")}">derived</span>`
+      : p.source
+        ? `<span class="prov" data-src="${esc(p.source)}" title="${esc(ATLAS.sourceName(p.source))}${p.as_of ? " · as of " + p.as_of : ""}${p.note ? " · " + p.note : ""}">${esc(ATLAS.sourceName(p.source))}</span>`
+        : "";
+    return `<tr>
+      <td class="p" title="${esc(spec[n].desc || "")}">${esc(n.replace(/_/g, " "))}</td>
+      <td class="v">${esc(fmtClaim(e.params[n]))}${esc(unit)}</td>
+      <td class="s">${origin}${p.confidence
+        ? `<span class="conf ${esc(p.confidence)}">${esc(p.confidence)}</span>` : ""}
+        ${conflicts.length ? `<span class="clash" title="${esc(conflicts.map(c =>
+          `${ATLAS.sourceName(c.source)}: ${fmtClaim(c.value)}`).join(" · "))}">${conflicts.length} other value${conflicts.length > 1 ? "s" : ""}</span>` : ""}</td>
+    </tr>`;
+  };
+  return `
+    <h3 class="sub">Parameters
+      <span class="n">${filled.length}/${names.length}</span></h3>
+    <table class="params"><tbody>${filled.map(row).join("")}</tbody></table>
+    ${missing.length ? `<div class="unfilled">nothing published for
+      ${missing.map(n => `<span class="tag">${esc(n.replace(/_/g, " "))}</span>`).join("")}</div>` : ""}`;
+}
+
 /* ====================================================================== */
-/* source cards (shared by both tabs)                                     */
+/* DATA SOURCES tab                                                       */
 /* ====================================================================== */
-function srcCard(s, highlight = new Set()) {
+const SRC_KIND_LABEL = {
+  pipeline: "pipeline", dataset: "dataset", "document-set": "documents",
+  api: "api", derived: "derived", registry: "registry",
+};
+
+function trustLabel(t) {
+  if (t >= 0.9) return "document of record";
+  if (t >= 0.75) return "first party";
+  if (t >= 0.6) return "second hand, transparent";
+  if (t >= 0.4) return "modelled estimate";
+  return "aggregated, method unstated";
+}
+
+function renderSourceList() {
+  const q = S.srcFilter.trim().toLowerCase();
+  const list = ATLAS.sourceList.filter(s => !q ||
+    (s.name + " " + s.publisher + " " + s.scope + " " + s.id).toLowerCase().includes(q));
+  $("#src-count").textContent = `${list.length} of ${ATLAS.sourceList.length}`;
+  $("#source-list").innerHTML = list.map(s => `
+    <div class="src-row${s.id === S.openSourceId ? " on" : ""}" data-src="${esc(s.id)}">
+      <div class="r1">
+        <span class="skind ${esc(s.kind)}">${esc(SRC_KIND_LABEL[s.kind] || s.kind)}</span>
+        <span class="nm">${esc(s.name)}</span>
+      </div>
+      <div class="r2">
+        <span class="pub">${esc(s.publisher)}</span>
+        <span class="nums">${fmt(s.stats.records)} records · ${fmt(s.stats.entities)} entities</span>
+      </div>
+      <div class="bar"><i style="width:${Math.max(2, Math.round(100 * s.trust))}%"></i></div>
+    </div>`).join("") || `<div class="faint pad">no sources match</div>`;
+  $$("#source-list .src-row").forEach(el =>
+    el.onclick = () => openSourceEntry(el.dataset.src));
+}
+
+function openSourceEntry(id, { push = true } = {}) {
+  const s = ATLAS.sources.get(id);
+  if (!s) return;
+  S.openSourceId = id;
+  setTab("sources", { push: false });
+  renderSourceList();
+
+  const fillsByType = new Map();
+  (s.fills || []).forEach(path => {
+    const [type, param] = path.split(".");
+    if (!fillsByType.has(type)) fillsByType.set(type, []);
+    fillsByType.get(type).push(param);
+  });
+
+  const field = (label, value, extra = "") => value
+    ? `<div class="kv"><dt>${esc(label)}</dt><dd>${value}${extra}</dd></div>` : "";
+
+  $("#source-detail").innerHTML = `
+    <div class="dt-head">
+      <h2>${esc(s.name)}</h2>
+      <span class="badge skind ${esc(s.kind)}">${esc(SRC_KIND_LABEL[s.kind] || s.kind)}</span>
+      <span class="badge" style="background:#1b2436;color:var(--dim)">${esc(s.id)}</span>
+    </div>
+    <div class="dt-body">
+      <p>${esc(s.scope || "")}</p>
+
+      <div class="kvs">
+        ${field("Publisher", esc(s.publisher))}
+        ${field("Access", `${esc(s.access || "")} · ${esc(s.format || "")}`)}
+        ${field("Snapshot", esc(s.retrieved || "—"), s.cadence
+          ? ` <span class="faint">upstream changes ${esc(s.cadence)}</span>` : "")}
+        ${field("Licence", esc(s.licence || "—"))}
+        ${field("Trust", `${s.trust.toFixed(2)} <span class="faint">${esc(trustLabel(s.trust))}</span>`)}
+        ${field("Default confidence", `<span class="conf ${esc(s.confidence_default)}">${esc(s.confidence_default)}</span>`)}
+        ${field("Adapter", `<code>${esc(s.adapter)}</code>`)}
+        ${field("Local snapshot", s.local_path ? `<code>${esc(s.local_path)}</code>` : "")}
+        ${field("Landing page", `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url.replace(/^https?:\/\//, "").slice(0, 70))}</a>`)}
+        ${field("Attribution", esc(s.attribution || ""))}
+      </div>
+
+      <div class="stat-row">
+        <div><b>${fmt(s.stats.records)}</b>records</div>
+        <div><b>${fmt(s.stats.documents)}</b>documents</div>
+        <div><b>${fmt(s.stats.entities)}</b>entities touched</div>
+      </div>
+
+      ${s.caveats ? `<div class="caveat"><b>Known limits.</b> ${esc(s.caveats)}</div>` : ""}
+
+      <h3 class="sub">Record kinds it produces</h3>
+      <div class="tags">${Object.entries(s.stats.record_kinds || {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, n]) => `<span class="tag hit" title="${esc((ATLAS.catalog.schema.record_kinds || {})[k] || "")}">
+          ${esc(k)} <span class="faint">${fmt(n)}</span></span>`).join("") || "—"}</div>
+
+      <h3 class="sub">Entity parameters it fills <span class="n">${(s.fills || []).length}</span></h3>
+      ${fillsByType.size ? Array.from(fillsByType.entries()).map(([type, params]) => `
+        <div class="fills">
+          <div class="ft">${esc(type)}</div>
+          <div class="tags">${params.map(p => `<span class="tag">${esc(p)}</span>`).join("")}</div>
+        </div>`).join("")
+        : `<div class="faint">Nothing: this source is evidence, not attributes.</div>`}
+
+      <h3 class="sub">Example data from this source <span class="n">${s.samples.length}</span></h3>
+      <p class="muted" style="font-size:11.5px;margin-top:-4px">
+        Real records, exactly as the pipeline stored them, with the entities each one
+        was labelled with and how.</p>
+      ${s.samples.map(sampleCard).join("") || `<div class="faint">none</div>`}
+
+      ${s.top_entities.length ? `<h3 class="sub">Entities it contributes most to</h3>
+        <div class="tags">${s.top_entities.map(e => `
+          <span class="tag" data-goto="${esc(e.entity)}">${dot(ATLAS.color(e.type), 6)}
+          ${esc(e.name)} <span class="faint">${fmt(e.records)}</span></span>`).join("")}</div>` : ""}
+
+      ${s.top_documents.length ? `<h3 class="sub">Documents it cites</h3>
+        ${s.top_documents.map(d => `<div class="doc-line">
+          <span class="kind ${esc(d.kind)}">${esc(KIND_LABEL[d.kind] || d.kind)}</span>
+          <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title || d.url.replace(/^https?:\/\//, "").slice(0, 80))}</a>
+          <span class="faint">${esc(d.publisher)}</span>
+        </div>`).join("")}` : ""}
+    </div>`;
+
+  $$("#source-detail .tag[data-goto]").forEach(el => el.onclick = () => {
+    S.selected = el.dataset.goto;
+    setTab("grid");
+    renderCards(); renderSide(); renderEntityDetail(); paintSelection();
+  });
+  $("#source-detail").scrollTop = 0;
+  if (push) writeHash();
+}
+
+function sampleCard(r) {
+  return `
+    <div class="sample">
+      <div class="s-top">
+        <span class="rkind">${esc(r.kind)}</span>
+        ${r.subject_name ? `<span class="subj">${esc(r.subject_name)}</span>` : ""}
+        ${r.date ? `<span class="date">${esc(r.date)}</span>` : ""}
+        <span class="conf ${esc(r.confidence)}">${esc(r.confidence)}</span>
+        <span class="rid">${esc(r.id)}</span>
+      </div>
+      <table class="claims">
+        <tbody>${r.claims.map(([k, v]) => `<tr>
+          <td class="k">${esc(k)}${r.units[k] ? ` <span class="faint">${esc(r.units[k])}</span>` : ""}</td>
+          <td class="v">${esc(v)}</td></tr>`).join("")}</tbody>
+      </table>
+      ${r.entities.length ? `<div class="s-ents">
+        <span class="faint">labelled with</span>
+        ${r.entities.map(e => `<span class="tag" title="${esc(e.methods.map(m =>
+          m.method + ": " + m.span).join(" · "))}">${esc(e.name)}
+          <span class="faint">${e.methods.map(m => m.method).join(",")}</span></span>`).join("")}
+      </div>` : ""}
+      ${r.documents.length ? `<div class="s-docs">${r.documents.map(u =>
+        `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, "").slice(0, 78))}</a>`).join("")}</div>` : ""}
+      ${r.raw_ref ? `<div class="s-raw">from <code>${esc(r.raw_ref)}</code></div>` : ""}
+    </div>`;
+}
+
+function fmtClaim(v) {
+  if (v == null) return "—";
+  if (Array.isArray(v)) return v.slice(0, 5).join(", ");
+  if (typeof v === "object") {
+    return Object.entries(v).slice(0, 4)
+      .map(([k, n]) => `${k} ${typeof n === "number" ? fmt(n) : n ?? ""}`).join(", ");
+  }
+  if (typeof v === "number") return fmt(Math.abs(v) >= 100 ? Math.round(v) : v);
+  return String(v);
+}
+
+/* ====================================================================== */
+/* document cards (shared by the grid and search tabs)                    */
+/* ====================================================================== */
+function docCard(s, highlight = new Set()) {
   const tags = s.entities.slice(0, 9).map(r => {
     const e = ATLAS.entities.get(r.entity);
     if (!e) return "";
@@ -414,7 +649,7 @@ function suggestions(q) {
     else if ((e.aliases || []).some(a => a.startsWith(query))) score = 200;
     else if ((e.aliases || []).some(a => a.includes(query))) score = 120;
     if (!score) return;
-    scored.push([score + e.weight * 3 + (e.sources || []).length * 0.05, e]);
+    scored.push([score + e.weight * 3 + e.document_count * 0.05, e]);
   });
   scored.sort((a, b) => b[0] - a[0]);
   return scored.slice(0, 12).map(s => s[1]);
@@ -433,7 +668,7 @@ function renderSuggest() {
     <div class="sg${i === S.cursor ? " cur" : ""}" data-id="${e.id}">
       ${typeDot(e)}<span class="nm">${esc(e.name)}</span>
       <span class="ty">${esc(ATLAS.type(e.type).label)}</span>
-      <span class="ct">${fmt((e.sources || []).length)} src</span>
+      <span class="ct">${fmt(e.document_count)} docs</span>
     </div>`).join("");
   box.classList.add("on");
   $$("#suggest .sg").forEach(el => { el.onclick = () => addPick(el.dataset.id); });
@@ -451,21 +686,21 @@ function addPick(id) {
   writeHash();
 }
 
-function matchingSources() {
+function matchingDocuments() {
   const picked = S.picked.filter(id => ATLAS.entities.has(id));
   let list;
   if (!picked.length) {
-    list = Array.from(ATLAS.sources.values());
+    list = Array.from(ATLAS.documents.values());
   } else if (S.mode === "all") {
-    list = Array.from(ATLAS.sources.values()).filter(s => {
+    list = Array.from(ATLAS.documents.values()).filter(s => {
       const ids = new Set(s.entities.map(r => r.entity));
       return picked.every(p => ids.has(p));
     });
   } else {
     const seen = new Set();
     list = [];
-    picked.forEach(p => (ATLAS.srcByEntity.get(p) || []).forEach(sid => {
-      if (!seen.has(sid)) { seen.add(sid); list.push(ATLAS.sources.get(sid)); }
+    picked.forEach(p => (ATLAS.docsByEntity.get(p) || []).forEach(sid => {
+      if (!seen.has(sid)) { seen.add(sid); list.push(ATLAS.documents.get(sid)); }
     }));
   }
   if (S.kinds.size) list = list.filter(s => S.kinds.has(s.kind));
@@ -508,47 +743,47 @@ function renderKindFilters(list) {
 let shownLimit = 60;
 function runSearch({ resetLimit = true } = {}) {
   if (resetLimit) shownLimit = 60;
-  $("#source-page").classList.remove("on");
+  $("#doc-page").classList.remove("on");
   $("#results").classList.remove("off");
   $("#results-head").classList.remove("off");
 
   // kind counts are computed before the kind filter is applied
   const savedKinds = S.kinds; S.kinds = new Set();
-  const unfiltered = matchingSources();
+  const unfiltered = matchingDocuments();
   S.kinds = savedKinds;
   renderKindFilters(unfiltered);
 
-  const list = matchingSources();
+  const list = matchingDocuments();
   const picked = new Set(S.picked);
   const label = S.picked.length
     ? S.picked.map(id => ATLAS.entities.get(id)?.name).filter(Boolean)
         .join(S.mode === "all" ? " AND " : " OR ")
     : "everything";
   $("#results-head").innerHTML = `
-    <span class="big">${fmt(list.length)} source${list.length === 1 ? "" : "s"}</span>
+    <span class="big">${fmt(list.length)} document${list.length === 1 ? "" : "s"}</span>
     <span class="muted">for ${esc(label)}</span>`;
-  $("#results").innerHTML = list.slice(0, shownLimit).map(s => srcCard(s, picked)).join("")
-    || `<div class="panel-box muted">No sources match. Try “Any of”, or remove a filter.</div>`;
+  $("#results").innerHTML = list.slice(0, shownLimit).map(s => docCard(s, picked)).join("")
+    || `<div class="panel-box muted">No documents match. Try “Any of”, or remove a filter.</div>`;
   if (list.length > shownLimit) {
     $("#results").innerHTML += `<div class="btn ghost" id="more-results">
       Show ${Math.min(60, list.length - shownLimit)} more of ${fmt(list.length)}</div>`;
     $("#more-results").onclick = () => { shownLimit += 60; runSearch({ resetLimit: false }); };
   }
-  $$("#results .src").forEach(el => el.onclick = () => openSource(el.dataset.sid));
+  $$("#results .src").forEach(el => el.onclick = () => openDoc(el.dataset.sid));
 }
 
 /* ---------------------------------------------------------------- source page */
-function openSource(id, { push = true } = {}) {
-  const s = ATLAS.sources.get(id);
+function openDoc(id, { push = true } = {}) {
+  const s = ATLAS.documents.get(id);
   if (!s) return;
-  S.openSource = id;
+  S.openDoc = id;
   setTab("search", { push: false });
   $("#results").classList.add("off");
   $("#results-head").classList.add("off");
-  const page = $("#source-page");
+  const page = $("#doc-page");
   page.classList.add("on");
 
-  const related = Array.from(ATLAS.sources.values())
+  const related = Array.from(ATLAS.documents.values())
     .filter(o => o.id !== s.id)
     .map(o => {
       const mine = new Set(s.entities.map(r => r.entity));
@@ -607,27 +842,28 @@ function openSource(id, { push = true } = {}) {
     </div>
 
     <div class="panel-box">
-      <h3 class="sub" style="margin-top:0">Cited by</h3>
-      <div class="tags">${s.datasets.map(d => `<span class="tag hit">${esc(d)}</span>`).join("")}</div>
+      <h3 class="sub" style="margin-top:0">Cited by these data sources</h3>
+      <div class="tags">${s.sources.map(d =>
+        `<span class="tag hit" data-src="${esc(d)}">${esc(ATLAS.sourceName(d))}</span>`).join("")}</div>
       ${s.contexts.length ? `<h3 class="sub">Context that travelled with the link</h3>
         ${s.contexts.map(c => `<div class="ctx">${esc(c)}</div>`).join("")}` : ""}
-      ${s.records.length ? `<h3 class="sub">Attached record${s.records.length > 1 ? "s" : ""}</h3>
-        ${s.records.map(r => `<div class="metrics">${Object.entries(r).map(([k, v]) =>
-          `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</div>`).join("")}` : ""}
+      ${s.claims.length ? `<h3 class="sub">What the citing record${s.claims.length > 1 ? "s" : ""} claimed</h3>
+        ${s.claims.map(r => `<div class="metrics">${Object.entries(r).map(([k, v]) =>
+          `<div><dt>${esc(k)}</dt><dd>${esc(fmtClaim(v))}</dd></div>`).join("")}</div>`).join("")}` : ""}
     </div>
 
     ${related.length ? `<div class="panel-box">
-      <h3 class="sub" style="margin-top:0">Sources sharing entities with this one</h3>
-      ${related.map(x => srcCard(x.o, new Set(s.entities.map(r => r.entity)))).join("")}
+      <h3 class="sub" style="margin-top:0">Documents sharing entities with this one</h3>
+      ${related.map(x => docCard(x.o, new Set(s.entities.map(r => r.entity)))).join("")}
     </div>` : ""}`;
 
   $("#sp-back").onclick = () => {
-    S.openSource = null;
+    S.openDoc = null;
     page.classList.remove("on");
     runSearch({ resetLimit: false });
     writeHash();
   };
-  $$("#source-page .pill[data-goto]").forEach(el => el.onclick = () => {
+  $$("#doc-page .pill[data-goto]").forEach(el => el.onclick = () => {
     S.selected = el.dataset.goto;
     setTab("grid");
     renderCards(); renderSide(); renderEntityDetail();
@@ -637,7 +873,13 @@ function openSource(id, { push = true } = {}) {
       paintSelection();
     });
   });
-  $$("#source-page .src").forEach(el => el.onclick = () => openSource(el.dataset.sid));
+  $$("#doc-page .src").forEach(el => el.onclick = () => openDoc(el.dataset.sid));
+  $$("#doc-page .tag[data-src]").forEach(el => el.onclick = ev => {
+    ev.stopPropagation();
+    S.openDoc = null;
+    $("#doc-page").classList.remove("on");
+    openSourceEntry(el.dataset.src);
+  });
   window.scrollTo({ top: 0 });
   $("#tab-search").scrollTop = 0;
   if (push) writeHash();
@@ -675,8 +917,10 @@ function hideTip() { $("#tooltip").style.opacity = 0; }
 /* ====================================================================== */
 function writeHash() {
   let h;
-  if (S.openSource) h = `#source/${S.openSource}`;
-  else if (S.tab === "search") {
+  if (S.openDoc) h = `#doc/${S.openDoc}`;
+  else if (S.tab === "sources") {
+    h = "#sources" + (S.openSourceId ? "/" + S.openSourceId : "");
+  } else if (S.tab === "search") {
     h = "#search" + (S.picked.length ? "/" + S.picked.join(",") : "");
     if (S.mode === "all") h += "?all";
   } else {
@@ -690,7 +934,15 @@ function readHash() {
   const [path, qs] = raw.split("?");
   const [head, ...rest] = path.split("/");
   const arg = rest.join("/");
-  if (head === "source" && ATLAS.sources.has(arg)) { openSource(arg, { push: false }); return; }
+  if ((head === "doc" || head === "source") && ATLAS.documents.has(arg)) {
+    openDoc(arg, { push: false }); return;
+  }
+  if (head === "sources") {
+    setTab("sources", { push: false });
+    renderSourceList();
+    openSourceEntry(ATLAS.sources.has(arg) ? arg : ATLAS.sourceList[0].id, { push: false });
+    return;
+  }
   if (head === "search") {
     S.mode = qs === "all" ? "all" : "any";
     S.picked = arg ? arg.split(",").filter(id => ATLAS.entities.has(id)) : [];
@@ -716,11 +968,17 @@ ATLAS.load().then(() => {
   renderChips();
 
   $$("#tabs button").forEach(b => b.onclick = () => {
-    S.openSource = null;
-    $("#source-page").classList.remove("on");
+    S.openDoc = null;
+    $("#doc-page").classList.remove("on");
     setTab(b.dataset.tab);
     if (b.dataset.tab === "search") runSearch();
+    if (b.dataset.tab === "sources") {
+      renderSourceList();
+      openSourceEntry(S.openSourceId || ATLAS.sourceList[0].id);
+    }
   });
+
+  $("#src-filter").oninput = ev => { S.srcFilter = ev.target.value; renderSourceList(); };
 
   $("#grid-filter").oninput = ev => {
     S.gridFilter = ev.target.value;
@@ -771,7 +1029,7 @@ ATLAS.load().then(() => {
   window.addEventListener("keydown", ev => {
     if (ev.key === "/" && document.activeElement.tagName !== "INPUT") {
       ev.preventDefault();
-      (S.tab === "grid" ? $("#grid-filter") : $("#q")).focus();
+      ({ grid: $("#grid-filter"), sources: $("#src-filter"), search: $("#q") })[S.tab].focus();
     }
     if (ev.key === "Escape" && S.tab === "grid" && S.selected) selectEntity(null);
   });
